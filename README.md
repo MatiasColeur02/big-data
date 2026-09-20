@@ -56,13 +56,32 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
 
 ## Reproducir el perfilado
 
+Requiere **Python 3.9 o superior**. En macOS conviene usar un entorno virtual: el Python del
+sistema es gestionado por el SO y `pip install` directo falla con `externally-managed-environment`.
+
 ```bash
 git clone <url-del-repo>
-pip install pandas
+cd tp-big-data
+
+python3 -m venv .venv         
+source .venv/bin/activate    
+
+pip install --upgrade pip
+pip install pandas tabulate jupyter
+
 jupyter notebook notebooks/01_profiling_landing.ipynb
 ```
 
-El notebook lee **solo** desde `data/datalake/landing/`, no escribe nada. Su salida está versionada en `evidence/profiling_landing.md`.
+Para salir del entorno, `deactivate`. Para volver a entrar en otra sesión, solo
+`source .venv/bin/activate`. La carpeta `.venv/` está en `.gitignore`, así que no se versiona.
+
+En Windows el único cambio es la activación: `.venv\Scripts\activate`.
+
+**Dependencias:** `pandas` para el perfilado, `tabulate` porque el notebook exporta las tablas con
+`.to_markdown()`, y `jupyter` para ejecutarlo.
+
+El notebook lee **solo** desde `data/datalake/landing/`, no escribe nada ahí y tarda menos de un
+minuto. Su salida se escribe en `evidence/profiling_landing.md`, que está versionada.
 
 ---
 

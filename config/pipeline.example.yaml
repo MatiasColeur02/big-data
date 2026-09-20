@@ -1,0 +1,42 @@
+datalake:
+  root: "/content/drive/MyDrive/bigdata_itba/datalake"   # D2
+  zones:
+    landing:     "${datalake.root}/landing"
+    bronze:      "${datalake.root}/bronze"
+    silver:      "${datalake.root}/silver"
+    gold:        "${datalake.root}/gold"
+    quarantine:  "${datalake.root}/quarantine"
+    checkpoints: "${datalake.root}/_checkpoints"
+
+spark:
+  app_name: "cloud_provider_analytics"
+  master: "local[*]"
+  version: "3.5.x"
+  conf:
+    spark.sql.sources.partitionOverwriteMode: "dynamic"
+    spark.sql.shuffle.partitions: 8
+
+streaming:
+  source_path: "${datalake.zones.landing}/usage_events_stream/"
+  max_files_per_trigger: 5
+  trigger_processing_time: "10 seconds"
+  watermark: "60 days"
+  dedup_key: "event_id"
+
+quality:
+  cost_increment_min: -0.01
+  csat_valid_range: [1, 5]
+  nps_valid_range: [-100, 100]
+  force_usd_fx_to_one: true
+
+anomaly:
+  method: "mad"
+  modified_zscore_threshold: 3.5
+  group_by: ["org_id", "service"]
+  fallback_when_mad_zero: "percentile_99"
+
+serving:
+  provider: "astradb"
+  keyspace: "cloud_analytics"
+  # secure_connect_bundle: ruta local
+  # token: variable de entorno ASTRA_DB_TOKEN

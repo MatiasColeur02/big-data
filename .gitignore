@@ -1,0 +1,33 @@
+# Configuración con credenciales
+config/pipeline.local.yaml
+.env
+secure-connect-*.zip
+*.pem
+**/token*.json
+
+# Zonas generadas del Data Lake (regenerables, no se versionan)
+data/datalake/bronze/
+data/datalake/silver/
+data/datalake/gold/
+data/datalake/quarantine/
+data/datalake/_checkpoints/
+*.parquet
+_SUCCESS
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Spark
+spark-warehouse/
+metastore_db/
+derby.log
+
+# IDE y sistema operativo
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

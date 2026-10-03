@@ -1,0 +1,14 @@
+# Política de saltos de línea del repositorio.
+# Fija el resultado en el repo, sin depender del core.autocrlf de cada integrante.
+
+# Texto: LF en el repositorio y en el working tree, en cualquier sistema operativo.
+* text=auto eol=lf
+
+# Landing es raw inmutable (consigna §4.2): sin conversión alguna, byte a byte.
+data/datalake/landing/** -text
+
+# Binarios: nunca se convierten ni se muestran como diff de texto.
+*.png binary
+*.pdf binary
+*.parquet binary
+*.zip binary

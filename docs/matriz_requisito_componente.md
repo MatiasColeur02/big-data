@@ -1,6 +1,6 @@
 # Matriz requisito-componente
 
-**Primera entrega · 28/09/2026**
+**Primera entrega · 05/10/2026**
 
 Trazabilidad entre lo que pide la consigna y lo que propone la solución. Tiene tres partes, porque el punto 6 del alcance (§5.2) pide dos cosas distintas —requisitos a componentes **y** las 5V a las decisiones de arquitectura— y §5.3 agrega la trazabilidad desde los objetivos del negocio.
 

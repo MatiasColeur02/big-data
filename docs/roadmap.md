@@ -1,18 +1,18 @@
 # Roadmap · Primera entrega
 
-**Fecha límite: lunes 28/09/2026 · 18:30 h** · Hoy: 20/09 · Quedan 8 días.
+**Fecha límite: lunes 05/10/2026 · 18:30 h** (postergada desde el 28/09) · Hoy: 03/10 · Quedan 2 días.
 
 ## Qué hay que entregar
 
-La consigna (§5.3 y checklist §9.1) pide cinco artefactos:
+La consigna (§5.3 y checklist §9.1) pide cinco artefactos, más la evidencia de exploración del punto 12 del alcance:
 
 | Artefacto | Archivo |
 |---|---|
 | Documento de diseño | `docs/diseno_v1.md` → PDF |
 | Repositorio versionado | este repo, tag `v1.0-entrega1` |
-| Diagrama de arquitectura v1 | `docs/arquitectura_v1.png` |
+| Diagrama de arquitectura v1 | `docs/arquitectura_v1.svg` (se exporta a `.png`) |
 | Matriz requisito-componente | `docs/matriz_requisito_componente.md` |
-| Plan inicial (supuestos, riesgos, esfuerzo) | sección del documento de diseño |
+| Plan inicial (supuestos, riesgos, esfuerzo) | `docs/plan_inicial.md` |
 | Evidencia de exploración de datos | `notebooks/01_profiling_landing.ipynb` + `evidence/` |
 
 **Esta entrega es de diseño, no de implementación.** La consigna lo dice explícitamente: *"no se espera una implementación profunda ni over-engineering en esta etapa"*. No se escriben jobs de Spark, no se crea el keyspace, no se escribe Parquet. Lo único que se ejecuta es el notebook de perfilado.

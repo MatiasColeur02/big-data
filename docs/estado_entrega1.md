@@ -1,6 +1,6 @@
 # Estado de la primera entrega
 
-**Fecha límite: lunes 28/09/2026 · 18:30 h** · Última revisión: 20/09/2026
+**Fecha límite: lunes 05/10/2026 · 18:30 h** (postergada desde el 28/09) · Última revisión: 03/10/2026
 
 Tablero de control: qué pide la consigna para esta instancia, dónde está cada cosa y qué falta.
 
@@ -16,7 +16,7 @@ Cada artefacto de la consigna, en un archivo.
 |---|---|---|---|---|
 | 1 | **Documento de diseño** | [`diseno_v1.md`](diseno_v1.md) → exportar a `.pdf` | 🔴 | Ocho de sus diez secciones |
 | 2 | **Repositorio** | [`../README.md`](../README.md) + estructura del repo | 🟢 | — |
-| 3 | **Diagrama de arquitectura v1** | [`arquitectura_v1.svg`](arquitectura_v1.svg) · `.png` | 🟢 | — |
+| 3 | **Diagrama de arquitectura v1** | [`arquitectura_v1.svg`](arquitectura_v1.svg) · `.png` | 🟡 | Exportar el `.png` desde el `.svg` |
 | 4 | **Matriz requisito-componente** | [`matriz_requisito_componente.md`](matriz_requisito_componente.md) | 🟢 | Los objetivos medibles, cuando exista el punto 1 |
 | 5 | **Plan inicial** | [`plan_inicial.md`](plan_inicial.md) | 🟡 | Las horas de la estimación de esfuerzo |
 
@@ -121,13 +121,13 @@ Se tilda antes de congelar, cada ítem contra un archivo concreto.
 
 ### Higiene del repositorio
 
-- [ ] Borrar `../evidence/PENDIENTE.md`, que ya no aplica
-- [ ] Sacar `.idea/` y los `.DS_Store` del índice de git: `git rm -r --cached .idea` y `git rm --cached '**/.DS_Store'`
+- [x] Borrar `../evidence/PENDIENTE.md`, que ya no aplica — verificado el 03/10: no existe en el repo
+- [x] Sacar `.idea/` y los `.DS_Store` del índice de git — verificado el 03/10: 0 archivos trackeados y ambos en `.gitignore`
 - [ ] Verificar que no haya credenciales commiteadas
 - [ ] Tag `v1.0-entrega1` una vez congelado
 
 ---
 
-## Después del 28/09
+## Después de la entrega
 
-La clase del 28 se usa para feedback. Con eso hay que versionar un **plan de correcciones** con prioridad, responsable, fecha objetivo y evidencia esperada, que es lo que alimenta la segunda entrega del 16/11. Lo pide §5.6.
+Con el feedback de esta entrega hay que versionar un **plan de correcciones** con prioridad, responsable, fecha objetivo y evidencia esperada, que es lo que alimenta la segunda entrega del 16/11. Lo pide §5.6.

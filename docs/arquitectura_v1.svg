@@ -20,7 +20,7 @@
   <text x="40" y="42" font-size="20" font-weight="700" fill="#1f2933">Cloud Provider Analytics · Arquitectura v1</text>
   <text x="40" y="63" font-size="12.5" fill="#647382">Patrón Lambda · PySpark + Structured Streaming + Parquet + Cassandra/AstraDB</text>
   <text x="1380" y="42" font-size="12.5" fill="#8a94a0" text-anchor="end">ITBA · Big Data 2C 2026</text>
-  <text x="1380" y="63" font-size="12.5" fill="#8a94a0" text-anchor="end">Primera entrega · 28/09/2026</text>
+  <text x="1380" y="63" font-size="12.5" fill="#8a94a0" text-anchor="end">Primera entrega · 05/10/2026</text>
 
   <!-- ETIQUETAS DE COLUMNA -->
   <g font-size="10" font-weight="600" fill="#9aa4b0" letter-spacing="1.3">

@@ -1,6 +1,6 @@
 # Documento de Diseño v1 · Cloud Provider Analytics
 
-**Primera entrega · 28/09/2026** · ITBA · Big Data 2C 2026
+**Primera entrega · 05/10/2026** · ITBA · Big Data 2C 2026
 
 > ESQUELETO. Cada sección indica de dónde sale el contenido. Se redacta una vez que las
 > decisiones están congeladas (paso 4-6 del roadmap). Mantenerlo conciso y visual: la consigna
@@ -14,10 +14,10 @@ Las preguntas se derivan de las 5 consultas obligatorias de la consigna §7.4.
 
 | V | Hoy (medido) | A escala real (supuesto) | Decisión que lo responde |
 |---|---|---|---|
-| Volumen | 43.200 eventos · 4.112 filas maestras · 13,2 MB | 1 evento/recurso/minuto × 1 M recursos ⇒ ~1.440 M eventos/día ≈ 300 GB/día | Parquet columnar particionado (D3) |
+| Volumen | 43.200 eventos · 4.112 filas maestras · 12,6 MB | 1 evento/recurso/minuto × 1 M recursos ⇒ ~1.440 M eventos/día ≈ 300 GB/día | Parquet columnar particionado (D3) |
 | Velocidad | 120 micro-lotes de 360 eventos | Ingesta continua; FinOps necesita el costo del día en curso | Structured Streaming (D1, D6) |
 | Variedad | JSONL con 2 esquemas + 7 CSV + `tags_json` anidado | Se suman logs, métricas de infra, telemetría | Esquema explícito unificado (D5) |
-| Veracidad | 2,85 % tipos ambiguos · 4,75 % `unit` nulo · 100 % FX inconsistente en USD | Los mismos defectos en millones de filas | 7 reglas + Quarantine (D7) |
+| Veracidad | 3,03 % tipos ambiguos · 4,72 % `unit` nulo · 100 % FX inconsistente en USD | Los mismos defectos en millones de filas | 7 reglas + Quarantine (D7) |
 | Valor | 5 marts para 3 dominios | Alertas de sobrecosto, forecast, churn | Gold + serving Cassandra (D8) |
 
 ## 3. Inventario y perfil de fuentes

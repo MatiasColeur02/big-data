@@ -6,7 +6,7 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
 
 | | |
 |---|---|
-| Entrega actual | **Primera entrega · 28/09/2026** — diseño y fundación de datos |
+| Entrega actual | **Primera entrega · 05/10/2026** (postergada desde el 28/09) — diseño y fundación de datos |
 | Estado | Diseño. Todavía no hay pipeline ejecutable (es el alcance de la entrega 2) |
 | Equipo | 5 integrantes |
 ---
@@ -23,7 +23,8 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
 │   ├── decisions.md · roadmap.md
 │   ├── arquitectura_v1.svg / .png
 │   ├── diseno_v1.md
-│   └── matriz_requisito_componente.md
+│   ├── matriz_requisito_componente.md
+│   └── plan_inicial.md
 ├── evidence/                 ← logs, capturas y salidas de cada entrega
 ├── infra/                    ← scripts de entorno (entrega 2+)
 ├── notebooks/                ← exploración y perfilado

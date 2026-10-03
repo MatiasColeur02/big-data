@@ -8,7 +8,7 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
 |---|---|
 | Entrega actual | **Primera entrega · 05/10/2026** (postergada desde el 28/09) — diseño y fundación de datos |
 | Estado | Diseño. Todavía no hay pipeline ejecutable (es el alcance de la entrega 2) |
-| Equipo | 5 integrantes |
+| Equipo | Valentina Marti Reta · Nicanor Porto · Matías Coleur · Federico Etchegorry · Julieta Techenski |
 ---
 
 ## Estructura

@@ -7,6 +7,7 @@ datalake:
     gold:        "${datalake.root}/gold"
     quarantine:  "${datalake.root}/quarantine"
     checkpoints: "${datalake.root}/_checkpoints"
+    metadata:    "${datalake.root}/_metadata"      # D11
 
 spark:
   app_name: "cloud_provider_analytics"

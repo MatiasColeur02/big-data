@@ -22,7 +22,7 @@ Documentos de apoyo:
 
 | Archivo | Contenido |
 |---|---|
-| [`decisions.md`](decisions.md) | Decisiones técnicas D1 a D10, con su justificación y evidencia |
+| [`decisions.md`](decisions.md) | Decisiones técnicas D1 a D12, con su justificación y evidencia |
 | [`../evidence/profiling_landing.md`](../evidence/profiling_landing.md) | Perfilado del dataset: evidencia de exploración (§5.2, punto 12) |
 | [`../notebooks/01_profiling_landing.ipynb`](../notebooks/01_profiling_landing.ipynb) | Notebook que produce el perfilado |
 
@@ -38,7 +38,7 @@ Documentos de apoyo:
 | 4 | Diagrama de arquitectura de alto nivel | `arquitectura_v1.svg` | Cubierto | — |
 | 5 | Selección justificada del patrón | `decisions.md` D1 · `diseno_v1.md` §4 | Parcial | Justificado en D1; sin incorporar al documento |
 | 6 | Mapeo de requisitos a componentes y relación 5V ↔ decisiones | `matriz_requisito_componente.md` | Cubierto | — |
-| 7 | Diseño del Data Lake | `decisions.md` D3 y D10 · `diseno_v1.md` §5 | Parcial | Metadatos sin definir; sin incorporar al documento |
+| 7 | Diseño del Data Lake | `decisions.md` D3, D10, D11 y D12 · `diseno_v1.md` §5 | Parcial | Decidido; sin incorporar al documento |
 | 8 | Flujos batch y streaming, con herramientas específicas | `decisions.md` D2, D4, D5, D6 y D7 · `diseno_v1.md` §6 | Parcial | Decidido; sin incorporar al documento |
 | 9 | Flujo batch expresado con lógica MapReduce | `diseno_v1.md` §7 | Cubierto | — |
 | 10 | Supuestos, riesgos, mitigaciones y decisiones abiertas | `plan_inicial.md` §§1-2 · `decisions.md` | Cubierto | — |
@@ -53,7 +53,7 @@ Documentos de apoyo:
 |---|---|---|
 | El problema, los usuarios y los criterios de éxito están formulados sin ambigüedad | Cubierto | `diseno_v1.md` §1 |
 | La arquitectura responde a los requisitos y distingue claramente batch y streaming | Cubierto | `arquitectura_v1.svg` · `decisions.md` D1 |
-| Las zonas del Data Lake, formatos y particiones son coherentes con los datos provistos | Cubierto | `decisions.md` D3 y D10 |
+| Las zonas del Data Lake, formatos y particiones son coherentes con los datos provistos | Cubierto | `decisions.md` D3, D10 y D12 |
 | El flujo MapReduce muestra cómo se resolvería el procesamiento batch del caso | Cubierto | `diseno_v1.md` §7 |
 | Los supuestos y riesgos son realistas y tienen mitigaciones propuestas | Cubierto | `plan_inicial.md` §§1-2 |
 | El repositorio y la documentación permiten continuar sin rehacer la fundación | Cubierto | repositorio |

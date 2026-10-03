@@ -1,6 +1,6 @@
-# DECISIONS.md
+# DECISIONS
 
-**Cloud Provider Analytics · ITBA Big Data 2C 2026** · v1.1
+**Cloud Provider Analytics · ITBA Big Data 2C 2026** · v1.2
 
 > Cifras verificadas sobre el **dataset completo** (120 partes, 43.200 eventos). Fuente: `evidence/profiling_landing.md`.
 
@@ -152,7 +152,8 @@ datalake/
 ├── silver/         # conformado, joins, calidad aplicada
 ├── gold/           # 5 marts con los nombres de la consigna
 ├── quarantine/     # rechazados, particionado por regla
-└── _checkpoints/   # fuera de las zonas: es estado del motor, no dato
+├── _checkpoints/   # fuera de las zonas: es estado del motor, no dato
+└── _metadata/      # fuera de las zonas: registro de corridas (D11)
 ```
 
 `_checkpoints/` afuera porque si vive dentro de `bronze/`, un `spark.read.parquet()` lo intenta leer y rompe.
@@ -160,6 +161,71 @@ datalake/
 **Promoción:** `overwrite` por partición (`partitionOverwriteMode=dynamic`), no global — es lo que permite reprocesar un día sin borrar el histórico, y es el mecanismo concreto detrás de la idempotencia. Ninguna fecha pasa a Gold si su Silver no está completa, y se verifica con `count(bronze[d]) == count(silver[d]) + count(quarantine[d])`.
 
 **Repo:** la estructura recomendada por la consigna §8.1, con el registro de decisiones dentro de `docs/`. Nombres de marts en Gold iguales a los de la consigna, para no tener que documentar correspondencias. El dataset (13 MB) sí se commitea; las zonas generadas y cualquier credencial, nunca.
+
+---
+
+## D11 · Metadatos en tres niveles, **sin metastore**
+
+Cada nivel responde una pregunta distinta y vive donde se lo consulta.
+
+| Nivel | Qué registra | Dónde vive |
+|---|---|---|
+| Registro | De dónde vino y qué le pasó a cada fila | Columnas técnicas dentro del Parquet de cada zona |
+| Esquema | Nombre, tipo y nulabilidad de cada columna | `StructType` explícitos en `src/common/`, footer de Parquet y diccionario de datos en `docs/` |
+| Corrida | Qué leyó, escribió y rechazó cada ejecución | `datalake/_metadata/runs/`, un registro por job ejecutado |
+
+Columnas técnicas por zona:
+
+| Zona | Columnas técnicas | Qué permiten |
+|---|---|---|
+| Landing | Ninguna: los archivos no se modifican | El nombre y la ruta del archivo son el metadato |
+| Bronze | `ingest_ts`, `source_file` | Saber cuándo y desde qué archivo entró cada fila |
+| Silver | Las de Bronze y `dq_flags` | Conservar el origen y saber qué reglas de D7 marcaron la fila |
+| Quarantine | Las de Bronze, `dq_rule` y `rejected_ts` | Saber qué regla rechazó cada fila y cuándo |
+| Gold | `processed_ts` | Saber cuándo se calculó cada fila del mart |
+
+`ingest_ts` y `source_file` son las columnas que exige la consigna (§4.2). `dq_flags` es una lista con los identificadores de las reglas `MARCA` de D7 que se aplicaron a la fila. `dq_rule` es la regla `BLOQUEA` que la rechazó y es además la columna de partición de Quarantine (D10). Los eventos conservan `schema_version` como columna (D5).
+
+**Registro de corridas:** cada job agrega una línea con `run_id`, `job`, zona de origen, zona de destino, inicio, duración, filas leídas, filas escritas, filas rechazadas y particiones escritas. Es la práctica indicada para el diseño de pipelines ("registrar métricas: filas leídas, descartadas, duplicados, tiempo por etapa") y es la fuente con la que se verifican los objetivos O4 y O6 del documento de diseño. Se guarda en JSON Lines y no en Parquet: se lee sin Spark y se copia a `evidence/` como evidencia de ejecución.
+
+**Linaje:** a nivel de fila lo da `source_file`, que se propaga de Bronze a Silver y a Quarantine. A nivel de tabla lo da el registro de corridas, que indica qué job escribió cada zona y desde cuál leyó. En Gold el linaje es por tabla: una fila del mart agrega eventos de varios archivos.
+
+**Sin metastore:** las tablas se referencian por ruta y el esquema sale del código. En Colab con `local[*]` (D2) el metastore embebido de Spark se crea en el disco de la sesión y se pierde al reciclarse; la ruta en Drive y el esquema versionado en el repositorio persisten.
+
+**Riesgo:** sin catálogo no hay un lugar único donde descubrir las tablas. **Mitigación:** la convención de rutas de D12 y el diccionario de datos, que forma parte de la documentación técnica (consigna §4.4).
+
+---
+
+## D12 · Naming por convención de rutas y retención **por partición de fecha**
+
+**Naming.** Todo en minúsculas y `snake_case`.
+
+| Elemento | Convención | Ejemplo |
+|---|---|---|
+| Ruta | `<zona>/<tabla>/<columna>=<valor>/` | `bronze/usage_events_stream/event_date=2025-07-03/` |
+| Tabla en Bronze | Nombre de la fuente, sin extensión | `bronze/billing_monthly/` |
+| Tabla en Silver | Entidad conformada; prefijo `dim_` para dimensiones | `silver/usage_events/`, `silver/dim_org/` |
+| Tabla en Gold | Nombre del mart de la consigna (D10) | `gold/org_daily_usage_by_service/` |
+| Tabla en Quarantine | Tabla de origen, particionada por regla | `quarantine/usage_events_stream/dq_rule=value_not_castable/` |
+| Columna | Sufijo según el tipo de dato: `_ts`, `_date`, `_usd`, `_raw` | `ingest_ts`, `event_date`, `daily_cost_usd`, `exchange_rate_raw` |
+
+La forma `<columna>=<valor>` es la que Spark genera con `partitionBy` y la que le permite podar particiones al leer. El sufijo `_raw` conserva el valor original cuando una regla lo corrige (D7).
+
+**Retención.** Se define para la operación a escala real: el dataset provisto cubre 60 días y ninguna política llega a aplicarse sobre él.
+
+| Zona | Retención | Justificación |
+|---|---|---|
+| Landing | Indefinida | Es inmutable (consigna §4.2) y la única copia desde la que se reconstruyen las demás zonas |
+| Bronze | 13 meses | Se regenera desde Landing; 13 meses permiten comparar un mes con el mismo mes del año anterior sin reingestar |
+| Silver | 13 meses | Se regenera desde Bronze; mismo horizonte que Bronze para que el reproceso de una fecha sea siempre posible |
+| Gold | Indefinida | Es agregado y chico (11.050 filas en el mart diario para 60 días) y contiene el histórico de revenue |
+| Quarantine | 90 días | Plazo para revisar el rechazo, corregir la regla o la fuente y reprocesar |
+| `_checkpoints/` | Mientras exista la consulta de streaming | Borrarlo hace que el stream vuelva a leer Landing desde el inicio; solo se borra en un reproceso completo |
+| `_metadata/` | Indefinida | Una línea por corrida; su tamaño es despreciable |
+
+**Cómo se aplica:** borrando particiones completas por `event_date` (D3), sin reescribir archivos. La retención y la poda de lectura usan la misma columna, lo que refuerza la decisión de particionar por fecha. Los maestros no se particionan (D3): cada carga reemplaza la anterior y no acumulan histórico.
+
+**Riesgo:** una retención mal aplicada borra datos todavía necesarios. **Mitigación:** Landing no se borra, así que toda zona es reconstruible.
 
 ---
 

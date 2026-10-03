@@ -92,7 +92,7 @@ Fuente: `decisions.md` D1. Diagrama `arquitectura_v1.png`. Lambda justificado m�
 transversales (gobierno, calidad, seguridad, metadatos, observabilidad).
 
 ## 5. Diseño del Data Lake
-Fuente: `decisions.md` D3 y D10. Zonas, formatos, particionamiento con la tabla de números,
+Fuente: `decisions.md` D3, D10, D11 y D12. Zonas, formatos, particionamiento con la tabla de números,
 naming, retención y reglas de promoción.
 
 ## 6. Flujos batch y streaming

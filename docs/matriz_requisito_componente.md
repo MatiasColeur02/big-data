@@ -4,7 +4,7 @@
 
 Trazabilidad entre lo que pide la consigna y lo que propone la solución. Tiene cuatro partes: el punto 6 del alcance (§5.2) pide dos cosas distintas —requisitos a componentes **y** las 5V a las decisiones de arquitectura— y §5.3 agrega la trazabilidad desde las preguntas y los objetivos del negocio.
 
-Las decisiones citadas (D1–D10) están en [`decisions.md`](decisions.md).
+Las decisiones citadas (D1–D12) están en [`decisions.md`](decisions.md).
 
 ---
 
@@ -34,7 +34,7 @@ Las decisiones citadas (D1–D10) están en [`decisions.md`](decisions.md).
 | 8 | Serving: keyspace, tablas query-first y carga desde Spark | `src/serving/load_astra.py` | Gold → Cassandra | D8 | 2.ª |
 | 9 | Idempotencia: reprocesamiento sin duplicados | Checkpoints + `overwrite` dinámico por partición + anti-join | todas | D6, D10 | 2.ª |
 | 10 | Performance: particionado sensato, control de archivos, coalesce/repartition | Particionado por fecha + `coalesce(1)` + compactación de Bronze | todas | D3 | 2.ª |
-| 11 | Gobierno: calidad, metadatos, linaje, responsabilidades, seguridad y observabilidad | Columnas técnicas, linaje por `source_file`, quarantine con la regla que rechazó, README y convenciones | todas | D7, D10 | 2.ª / final |
+| 11 | Gobierno: calidad, metadatos, linaje, responsabilidades, seguridad y observabilidad | Columnas técnicas, linaje por `source_file`, registro de corridas, quarantine con la regla que rechazó, README y convenciones | todas | D7, D10, D11, D12 | 2.ª / final |
 | 12 | Documentación: diagrama, diccionario, decisiones, trade-offs, pruebas y evidencias | `docs/` + `decisions.md` + `evidence/` | — | D10 | **1.ª** |
 
 ---
@@ -51,7 +51,7 @@ Qué problema concreto introduce cada dimensión en este caso, y qué decisión 
 | **Veracidad** | 3,03 % de tipos ambiguos, 4,72 % de `unit` nulo, el 100 % de las facturas en USD con tipo de cambio inconsistente, costos negativos y spikes de magnitud alta | **D4** y **D7** · `value` como string en Bronze y siete reglas de calidad con quarantine | Declarar `value` como `DoubleType` convertiría el 3,03 % en null sin lanzar ningún error, y ninguna regla podría distinguir esos nulls de los legítimos |
 | **Valor** | FinOps, Soporte y Producto necesitan responder preguntas concretas, no explorar datos crudos | **D8** y **D10** · Marts en Gold por dominio y modelo query-first en Cassandra | Una tabla genérica con índices secundarios obligaría a `ALLOW FILTERING`, que es un antipatrón en Cassandra y contradice el modelado query-first |
 
-La veracidad es la dimensión más cargada en este dataset: cuatro de las siete reglas de calidad y dos de las diez decisiones existen solo por problemas medidos en el perfilado.
+La veracidad es la dimensión más cargada en este dataset: cuatro de las siete reglas de calidad y dos de las doce decisiones existen solo por problemas medidos en el perfilado.
 
 ---
 

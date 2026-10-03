@@ -11,6 +11,7 @@ data/datalake/silver/
 data/datalake/gold/
 data/datalake/quarantine/
 data/datalake/_checkpoints/
+data/datalake/_metadata/
 *.parquet
 _SUCCESS
 

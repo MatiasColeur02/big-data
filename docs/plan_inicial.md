@@ -64,7 +64,7 @@ puede predecir.
 | Diagrama de arquitectura v1 | Medio | hecho |
 | Matriz de trazabilidad | Medio | hecho |
 | Interpretación del problema, usuarios y objetivos | Bajo | hecho |
-| Metadatos de las zonas del Data Lake | Bajo | pendiente |
+| Metadatos de las zonas del Data Lake | Bajo | hecho |
 | Flujos batch y streaming, y lógica MapReduce | Medio | borrador |
 | Redacción e integración del documento de diseño | **Alto** | pendiente |
 | Revisión contra el checklist y ensayo de defensa | Bajo | pendiente |

@@ -3,7 +3,7 @@
 | Archivo | Qué es |
 |---|---|
 | [`estado_entrega1.md`](estado_entrega1.md) | Trazabilidad: qué pide la consigna para la primera entrega y qué archivo lo cubre |
-| [`decisions.md`](decisions.md) | Las 10 decisiones técnicas, con su justificación y evidencia |
+| [`decisions.md`](decisions.md) | Las 12 decisiones técnicas, con su justificación y evidencia |
 | [`diseno_v1.md`](diseno_v1.md) | **Artefacto 1** · Documento de diseño que se entrega el 05/10 (se exporta a PDF) |
 | [`plan_inicial.md`](plan_inicial.md) | **Artefacto 5** · Supuestos, riesgos, esfuerzo, roles, recursos y próximos pasos |
 | [`matriz_requisito_componente.md`](matriz_requisito_componente.md) | **Artefacto 4** · Trazabilidad preguntas / requisitos / 5V → componentes |

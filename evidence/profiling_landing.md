@@ -32,8 +32,8 @@ Total: 47,312 filas · 12.6 MB
 
 ### Dominios categóricos
 
-- `customers_orgs.csv::industry` → 10 valores: Gaming (12), Education (10), Manufacturing (10), Retail (9), Government (9), Healthcare (8), Fintech (7), E-commerce (6), Energy (5), Media (4)
-- `customers_orgs.csv::hq_region` → 7 valores: eu-central (16), ap-south (15), us-east (14), ap-northeast (11), sa-east (10), us-west (7), eu-west (7)
+- `customers_orgs.csv::industry` → 10 valores: Gaming (12), Education (10), Manufacturing (10), Government (9), Retail (9), Healthcare (8), Fintech (7), E-commerce (6), Energy (5), Media (4)
+- `customers_orgs.csv::hq_region` → 7 valores: eu-central (16), ap-south (15), us-east (14), ap-northeast (11), sa-east (10), eu-west (7), us-west (7)
 - `customers_orgs.csv::plan_tier` → 4 valores: standard (41), pro (21), enterprise (10), free (8)
 - `customers_orgs.csv::lifecycle_stage` → 5 valores: active (54), at_risk (11), churned (6), prospect (6), lead (3)
 - `customers_orgs.csv::marketing_source` → 5 valores: event (21), organic (17), partner (16), ads (14), referral (12)
@@ -54,19 +54,19 @@ Total: 47,312 filas · 12.6 MB
 
 ### Problemas de calidad
 
-| problema                             | magnitud   | interpretación                                                      |
-|:-------------------------------------|:-----------|:--------------------------------------------------------------------|
-| billing · currency=USD con fx != 1   | 160/160    | rango 0.8546–1.1179 → distorsiona el revenue hasta ±15% (D7)        |
-| billing · subtotal negativo          | 13/240     | mínimo -1671.83 → notas de crédito, NO se bloquean                  |
-| billing · credits nulo               | 137/240    | se interpreta como 0, no como faltante (supuesto)                   |
-| billing · fx USD                     | 160 filas  | min 0.8546 / mediana 0.9951 / max 1.1179                            |
-| billing · fx EUR                     | 29 filas   | min 0.9981 / mediana 1.1047 / max 1.1981                            |
-| billing · fx ARS                     | 51 filas   | min 0.0013 / mediana 0.0015 / max 0.0016                            |
-| tickets · csat fuera de [1,5]        | 40/746     | valores [0.0, 6.0, 7.0] (D7)                                        |
-| tickets · resolved_at nulo           | 240/1000   | tickets abiertos, NO es un defecto                                  |
-| tickets · resolved_at < created_at   | 0          | ninguno                                                             |
-| tickets · SLA breach                 | 95/1000    | por severidad: {'medium': 37, 'low': 36, 'high': 20, 'critical': 2} |
-| orgs · nps_score fuera de [-100,100] | 1          | valor [101.0] (D7)                                                  |
+| problema                             | magnitud   | interpretación                                                           |
+|:-------------------------------------|:-----------|:-------------------------------------------------------------------------|
+| billing · currency=USD con fx != 1   | 160/160    | rango 0.8546–1.1179 → distorsiona el revenue hasta ±15% (D7)             |
+| billing · subtotal negativo          | 13/240     | mínimo -1671.83 → notas de crédito, NO se bloquean                       |
+| billing · credits nulo               | 137/240    | se interpreta como 0, no como faltante (supuesto 2 de `plan_inicial.md`) |
+| billing · fx USD                     | 160 filas  | min 0.8546 / mediana 0.9951 / max 1.1179                                 |
+| billing · fx EUR                     | 29 filas   | min 0.9981 / mediana 1.1047 / max 1.1981                                 |
+| billing · fx ARS                     | 51 filas   | min 0.0013 / mediana 0.0015 / max 0.0016                                 |
+| tickets · csat fuera de [1,5]        | 40/746     | valores [0.0, 6.0, 7.0] (D7)                                             |
+| tickets · resolved_at nulo           | 240/1000   | tickets abiertos, NO es un defecto                                       |
+| tickets · resolved_at < created_at   | 0          | ninguno                                                                  |
+| tickets · SLA breach                 | 95/1000    | por severidad: {'medium': 37, 'low': 36, 'high': 20, 'critical': 2}      |
+| orgs · nps_score fuera de [-100,100] | 1          | valor [101.0] (D7)                                                       |
 
 ### Integridad referencial
 
@@ -103,9 +103,9 @@ Todas las fuentes apuntan a las 80 organizaciones de `customers_orgs.csv`. Sin h
 |--------:|------:|--------:|------:|------:|--------:|-------:|
 | -154.46 |     1 |    3.41 | 11.93 | 16.72 |  133.14 | 317.43 |
 
-- **Costos negativos:** 211 (0.49%) → regla R2, se marcan como crédito
+- **Costos negativos:** 211 (0.49%) → se marcan con flag de anomalía (D7)
 - **Spikes > 100 USD:** 48
-- La **media (3.41) es 3.4× la mediana (1.00)** y el salto de p99 a p99.9 es de 6×: distribución muy asimétrica. Por eso D9 usa MAD y no z-score: media y desvío están contaminados por los mismos outliers que se busca detectar.
+- La **media (3.41) es 3.4× la mediana (1.00)** y el salto de p99 a p99.9 es de 8×: distribución muy asimétrica. Por eso D9 usa MAD y no z-score: media y desvío están contaminados por los mismos outliers que se busca detectar.
 
 ### Impacto del watermark
 
@@ -119,7 +119,7 @@ Todas las fuentes apuntan a las 80 organizaciones de `customers_orgs.csv`. Sin h
 
 **Por qué pasa:** el dataset no está ordenado por tiempo. Las primeras 5 líneas de `events_part_0000.jsonl` son ['2025-08-17T01:55:00Z', '2025-07-16T11:20:00Z', '2025-08-18T18:52:00Z', '2025-07-29T03:32:00Z', '2025-08-11T15:19:00Z'] — los 60 días vienen barajados dentro de cada archivo.
 
-En el primer micro-lote Spark ya ve un evento del 31/08 y el watermark salta al máximo. Un watermark de 2 días —el valor 'razonable' por reflejo— **descarta el 85% de los eventos sin lanzar ninguna excepción**. Por eso D6 fija 60 días y resuelve la idempotencia por checkpoint y anti-join, no por watermark.
+En el primer micro-lote Spark ya ve un evento del 31/08 y el watermark salta al máximo. Un watermark de 2 días **descarta el 92.7% de los eventos sin lanzar ninguna excepción**. Por eso D6 fija 60 días y resuelve la idempotencia por checkpoint y anti-join, no por watermark.
 
 ### Grano de `org_daily_usage_by_service`
 
@@ -136,4 +136,4 @@ En el primer micro-lote Spark ya ve un evento del 31/08 y el watermark salta al 
 | Por `event_date` × `service` | 360 | ~120 | ~5 KB |
 | Por `event_date` × `service` × `region` | 2520 | ~17 | <1 KB |
 
-Un bloque HDFS son 128 MB (clase 04). Incluso la mejor opción produce archivos 4.000× más chicos: estamos en pleno *small files problem*. Se elige `event_date` porque las 5 consultas obligatorias filtran por fecha y ninguna por servicio solo.
+Un bloque HDFS son 128 MB. Incluso la mejor opción produce archivos 4.000× más chicos: estamos en pleno *small files problem*. Se elige `event_date` porque las 5 consultas obligatorias filtran por fecha y ninguna por servicio solo.

@@ -19,8 +19,8 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
 ├── config/                   ← configuración externalizada, sin credenciales
 ├── data/                     ← dataset provisto por la cátedra (landing)
 ├── docs/                     ← todo el material de la entrega
-│   ├── estado_entrega1.md    ← tablero de control
-│   ├── decisions.md · roadmap.md
+│   ├── estado_entrega1.md    ← trazabilidad consigna → archivos
+│   ├── decisions.md
 │   ├── arquitectura_v1.svg / .png
 │   ├── diseno_v1.md
 │   ├── matriz_requisito_componente.md

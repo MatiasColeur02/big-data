@@ -2,8 +2,7 @@
 
 | Archivo | Qué es |
 |---|---|
-| **[`estado_entrega1.md`](estado_entrega1.md)** | **Tablero de control**: qué pide la consigna, qué está hecho y qué falta |
-| [`roadmap.md`](roadmap.md) | Qué hay que entregar y en qué orden hacerlo |
+| [`estado_entrega1.md`](estado_entrega1.md) | Trazabilidad: qué pide la consigna para la primera entrega y qué archivo lo cubre |
 | [`decisions.md`](decisions.md) | Las 10 decisiones técnicas, con su justificación y evidencia |
 | [`diseno_v1.md`](diseno_v1.md) | **Artefacto 1** · Documento de diseño que se entrega el 05/10 (se exporta a PDF) |
 | [`plan_inicial.md`](plan_inicial.md) | **Artefacto 5** · Supuestos, riesgos, esfuerzo, roles, recursos y próximos pasos |

@@ -3,7 +3,7 @@
 **Primera entrega · 05/10/2026** · ITBA · Big Data 2C 2026
 
 > ESQUELETO. Cada sección indica de dónde sale el contenido. Se redacta una vez que las
-> decisiones están congeladas (paso 4-6 del roadmap). Mantenerlo conciso y visual: la consigna
+> decisiones están congeladas. Mantenerlo conciso y visual: la consigna
 > pide que "permita una revisión rápida".
 
 ## 1. Interpretación del problema
@@ -38,7 +38,7 @@ Fuente: `decisions.md` D4, D5, D6, D7.
 
 ## 7. Lógica MapReduce del flujo batch
 
-Borrador. Se expresa el mart `org_daily_usage_by_service` como job MapReduce canónico.
+Se expresa el mart `org_daily_usage_by_service` como job MapReduce canónico.
 
 **Map** — por cada evento de Silver:
 ```
@@ -72,13 +72,14 @@ métricas son sumas, y la suma es asociativa y conmutativa.
         ...))
 ```
 
-**Qué defender:** el `groupBy().agg()` *es* este MapReduce. El `groupBy` define la clave del
-shuffle, el `agg` es el reduce, y Spark aplica agregación parcial en el mapper, que cumple el rol
-del combiner. La diferencia (clase 03, p. 45) es que MapReduce materializa el intermedio en HDFS
-con replicación entre fase y fase, mientras Spark lo mantiene en memoria y encadena el DAG.
+**Correspondencia:** el `groupBy().agg()` equivale a este MapReduce. El `groupBy` define la clave
+del shuffle, el `agg` es el reduce, y Spark aplica agregación parcial en el mapper, que cumple el
+rol del combiner. La diferencia (clase 03, p. 45) es que MapReduce escribe el resultado de cada
+trabajo en HDFS con replicación, mientras Spark mantiene los resultados intermedios en memoria y
+encadena las transformaciones en un DAG con evaluación perezosa.
 
-**Sobre el skew:** no hay riesgo. La clave más pesada tiene ~50 eventos, así que ninguna partición
-domina el tiempo total. Conviene decirlo: muestra que se evaluó el riesgo en lugar de ignorarlo.
+**Sobre el skew:** no hay riesgo. La clave más pesada tiene 15 eventos y la mediana es 3, así que
+ninguna partición domina el tiempo total.
 
 ## 8. Matriz requisito-componente
 Archivo aparte: `matriz_requisito_componente.md`.
@@ -88,4 +89,4 @@ Fuente: secciones finales de `decisions.md`. Las decisiones abiertas se listan c
 — lo pide la consigna §5.2.10.
 
 ## 10. Estimación de esfuerzo y recursos
-Fuente: `roadmap.md` (misma carpeta).
+Fuente: `plan_inicial.md` §3.

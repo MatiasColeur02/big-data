@@ -22,7 +22,7 @@ Supuestos, riesgos con sus mitigaciones, estimación de esfuerzo y próximos pas
 | # | Riesgo | Prob. | Impacto | Mitigación |
 |---|---|---|---|---|
 | R1 | Un watermark corto descarta el 93 % de los eventos, sin error ni log | Alta | Crítico | D6: watermark de 60 días, con la simulación documentada |
-| R2 | El equipo se pone a escribir código en vez del documento y llega sin entregable | Media | Crítico | Esta entrega es de diseño; la implementación es alcance de la 2.ª |
+| R2 | El esfuerzo del equipo se desvía hacia la implementación y el documento de diseño queda incompleto | Media | Crítico | Esta entrega es de diseño; la implementación es alcance de la 2.ª |
 | R3 | `value` declarado como `DoubleType` pierde el 3,03 % de los datos en silencio | Alta | Alto | D4: leer como string en Bronze y castear en Silver |
 | R4 | El revenue queda distorsionado ±15 % por el tipo de cambio de las facturas en USD | Alta | Alto | D7: forzar el FX a 1,0 para USD, conservando el original |
 | R5 | El diagrama deja de coincidir con lo que dice el documento | Media | Alto | Control cruzado antes de congelar; el diagrama se actualiza junto con el texto |
@@ -30,7 +30,7 @@ Supuestos, riesgos con sus mitigaciones, estimación de esfuerzo y próximos pas
 | R7 | Límites del tier gratuito de AstraDB en la segunda entrega | Baja | Medio | Probar la conexión antes del 16/11; Cassandra en contenedor como plan B |
 | R8 | Los archivos Parquet quedan demasiado chicos y degradan la lectura | Media | Bajo | D3: no particionar por servicio; compactar Bronze |
 
-Los cuatro primeros no son hipotéticos: R1, R3 y R4 se detectaron midiendo el dataset, y están documentados con la cifra exacta en `decisions.md`.
+R1, R3 y R4 no son hipotéticos: se detectaron midiendo el dataset y están documentados con la cifra exacta en `decisions.md`.
 
 ---
 

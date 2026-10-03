@@ -4,7 +4,7 @@
 
 > Cifras verificadas sobre el **dataset completo** (120 partes, 43.200 eventos). Fuente: `evidence/profiling_landing.md`.
 
-Decisiones técnicas del proyecto. Roadmap y calendario en [`docs/roadmap.md`](roadmap.md).
+Decisiones técnicas del proyecto.
 
 ---
 
@@ -12,7 +12,7 @@ Decisiones técnicas del proyecto. Roadmap y calendario en [`docs/roadmap.md`](r
 
 Streaming para `usage_events_stream` (43.200 eventos en 120 JSONL), batch para los 7 CSV maestros (4.112 filas).
 
-La consigna exige sí o sí streaming de eventos y batch de maestros. Kappa obligaría a convertir 7 CSV en streams sintéticos sin resolver nada: `billing_monthly` tiene 3 cortes mensuales y las dimensiones cambian a ritmo diario.
+La consigna exige streaming de eventos y batch de maestros (§4.3). Kappa obligaría a convertir 7 CSV en streams sintéticos sin resolver nada: `billing_monthly` tiene 3 cortes mensuales y las dimensiones cambian a ritmo diario.
 
 **Riesgo:** duplicar lógica entre las dos ramas. **Mitigación:** las funciones de conformance viven una sola vez en `src/common/` y se importan desde los dos jobs.
 
@@ -24,7 +24,7 @@ La consigna exige sí o sí streaming de eventos y batch de maestros. Kappa obli
 
 Se fija 3.5.x y no 4.x porque el `spark-cassandra-connector` publica assembly estable para Spark 3.5: arrancar en 4.x nos obliga a migrar en noviembre. Drive y no el disco de Colab porque el disco se borra al reciclarse la sesión y ahí se pierden Bronze, Silver y los checkpoints — sin eso no se puede demostrar idempotencia.
 
-**Sobre `local[*]`:** se corre en un nodo y hay que poder defenderlo. El argumento es que usamos solo la API de DataFrames, particionado explícito y Parquet, así que el mismo código corre distribuido sin reescribir nada. Es la pregunta más probable del docente.
+**Sobre `local[*]`:** la ejecución es en un solo nodo. Se usa únicamente la API de DataFrames, particionado explícito y Parquet, por lo que el mismo código corre distribuido en un clúster sin reescribirse.
 
 ---
 
@@ -61,7 +61,7 @@ Una sola tabla Bronze con las columnas de v2; los eventos v1 llevan `carbon_kg` 
 
 La unión es *additive*: v2 solo agrega campos. El corte es limpio, sin solapamiento — v1 cubre 03/07 → 17/07 y v2 cubre 18/07 → 31/08. `genai_tokens` aparece solo en `service=genai` con `schema_version=2`: 3.132 de 4.158 eventos genai.
 
-**Consecuencia:** el mart `genai_tokens_by_org_date` no tiene datos de julio, y la respuesta correcta a "¿por qué falta?" es "el esquema v1 no medía tokens", no un bug.
+**Consecuencia:** el mart `genai_tokens_by_org_date` no tiene datos anteriores al 18/07. La ausencia es esperada y no un defecto: el esquema v1 no medía tokens.
 
 ---
 
@@ -81,7 +81,7 @@ Simulando el comportamiento real de Structured Streaming con micro-lotes de 5 ar
 | 30 días | 47,9 % |
 | **60 días** | **0 %** |
 
-Un watermark de 2 días — el valor "razonable" por reflejo — tira el 93 % de los eventos **sin excepción ni log**. El *event time* y el *processing time* no correlacionan: esto es un backfill, no un stream en vivo, y el watermark es la herramienta correcta solo cuando ambos tiempos correlacionan.
+Un watermark de 2 días, valor habitual en un stream en vivo, descarta el 93 % de los eventos **sin excepción ni log**. El *event time* y el *processing time* no correlacionan: esto es un backfill, no un stream en vivo, y el watermark es la herramienta correcta solo cuando ambos tiempos correlacionan.
 
 **Riesgo:** 60 días de estado sería inviable a escala real. Acá son 43.200 claves, unos pocos MB. Se documenta que en producción habría que separar backfill histórico (batch) de stream en vivo (watermark de minutos) — que es justamente lo que Lambda permite.
 
@@ -101,13 +101,13 @@ Un watermark de 2 días — el valor "razonable" por reflejo — tira el 93 % de
 | `csat ∈ [1,5]` | MARCA y anula | 40 / 746 (0.0×11, 6.0×28, 7.0×1) |
 | `nps_score ∈ [-100,100]` | MARCA y anula | 1 (valor 101.0) |
 
-**Por qué `event_id` bloquea con cero violaciones:** no protege contra Landing, que está limpio, sino contra el reproceso. Es una regla de idempotencia disfrazada de regla de calidad.
+**Por qué `event_id` bloquea con cero violaciones:** no protege contra Landing, que está limpio, sino contra el reproceso. Cumple la función de regla de idempotencia además de regla de calidad.
 
 **Por qué `unit` imputa en vez de bloquear:** la unidad se deduce de la métrica sin ambigüedad (`requests→count`, `cpu_hours→hours`, `storage_gb_hours→gb_hours`, sin una sola excepción en 43.200 eventos). Bloquear 4,72 % por un campo derivable es destruir datos buenos.
 
 **Por qué el FX se corrige:** las 160 facturas en USD traen tipo de cambio entre 0,8546 y 1,1179, cuando un importe en USD convertido a USD tiene fx = 1 por definición. Es ruido sintético. Sin corregir, el revenue queda distorsionado ±15 % y la consulta obligatoria 4 da un número sin significado. Se conserva el original en `exchange_rate_raw`.
 
-**Lo que no es error:** el `subtotal` negativo de billing (13/240) son notas de crédito y se conservan. Los tipos de cambio de ARS (~0,0015) son reales, no ceros mal cargados — es exactamente el valor que alguien "arregla" por las dudas y termina inflando el revenue argentino por 650.
+**Lo que no es error:** el `subtotal` negativo de billing (13/240) son notas de crédito y se conservan. Los tipos de cambio de ARS (~0,0015) son reales, no ceros mal cargados: forzarlos a 1 inflaría el revenue en ARS unas 650 veces.
 
 ---
 
@@ -123,7 +123,7 @@ Un watermark de 2 días — el valor "razonable" por reflejo — tira el 93 % de
 
 `org_id` como partition key en todas porque las cinco consultas filtran por organización: se toca una sola partición. El mart diario tiene 11.050 filas sobre 80 organizaciones: ~138 por partición, muy por debajo del límite práctico.
 
-**Tabla aparte para el Top-N** porque Cassandra no ordena por columna agregada: hay que pre-agregar en Spark y escribir el total como clustering key descendente. Resolverlo con `ALLOW FILTERING` sobre la tabla diaria es el antipatrón que la consigna quiere ver evitado.
+**Tabla aparte para el Top-N** porque Cassandra no ordena por columna agregada: hay que pre-agregar en Spark y escribir el total como clustering key descendente. Resolverlo con `ALLOW FILTERING` sobre la tabla diaria es un antipatrón en Cassandra y contradice el modelado query-first que exige la consigna (§4.4).
 
 Fechas en `DESC` porque todas las consultas piden datos recientes.
 
@@ -159,7 +159,7 @@ datalake/
 
 **Promoción:** `overwrite` por partición (`partitionOverwriteMode=dynamic`), no global — es lo que permite reprocesar un día sin borrar el histórico, y es el mecanismo concreto detrás de la idempotencia. Ninguna fecha pasa a Gold si su Silver no está completa, y se verifica con `count(bronze[d]) == count(silver[d]) + count(quarantine[d])`.
 
-**Repo:** la estructura recomendada por la consigna §8.1, con `roadmap.md` dentro de `docs/` como único agregado. Nombres de marts en Gold iguales a los de la consigna, para no tener que documentar correspondencias. El dataset (13 MB) sí se commitea; las zonas generadas y cualquier credencial, nunca.
+**Repo:** la estructura recomendada por la consigna §8.1, con el registro de decisiones dentro de `docs/`. Nombres de marts en Gold iguales a los de la consigna, para no tener que documentar correspondencias. El dataset (13 MB) sí se commitea; las zonas generadas y cualquier credencial, nunca.
 
 ---
 
@@ -169,17 +169,17 @@ datalake/
 
 **Lo que está bien:** integridad referencial perfecta (cero huérfanos en las 6 fuentes que referencian organizaciones, los 400 `resource_id` existen). Cero duplicados de PK. Cero fechas inválidas. Dominios ya conformados: no hay variantes tipo `us_east` / `US-East`. Ningún evento tiene `service` o `region` distintos de los de su recurso.
 
-Esto último importa: el join con `dim_resource` **no** es necesario para conformar, pero se hace igual como control de calidad y para traer `state` y `tags_json`. Conviene decirlo así — se verificó en lugar de asumirlo.
+En consecuencia, el join con `dim_resource` **no** es necesario para conformar; se realiza igualmente como control de calidad y para traer `state` y `tags_json`.
 
 **Lo que está roto:** ver D7. Más `credits` nulo en billing (57 %, se interpreta como 0), `resolved_at` nulo en tickets (24 %, son tickets abiertos, no un defecto) y `last_login` nulo en users (17 %).
 
-**Sin skew:** de las 28.800 claves posibles de `(org_id, date, service)` se materializan 11.050, con mediana de 3 eventos y un máximo de 15. Ninguna partición domina el tiempo total. Vale decirlo en el documento: muestra que se evaluó el riesgo.
+**Sin skew:** de las 28.800 claves posibles de `(org_id, date, service)` se materializan 11.050, con mediana de 3 eventos y un máximo de 15. Ninguna partición domina el tiempo total.
 
 ---
 
 ## Decisiones abiertas
 
-Se declaran como abiertas en la entrega.
+Decisiones no tomadas a la fecha de la entrega, con su fecha límite y la opción preferida.
 
 | Pregunta | Se decide antes de | Inclinación |
 |---|---|---|

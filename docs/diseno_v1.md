@@ -477,7 +477,8 @@ El detalle está en [`plan_inicial.md`](plan_inicial.md).
 ### 10.2 Esfuerzo
 
 El esfuerzo se estima en tallas relativas y no en horas. **Alto**: varias sesiones, con discusión
-de equipo. **Medio**: una o dos sesiones. **Bajo**: una sesión.
+de equipo. **Medio**: una o dos sesiones. **Bajo**: una sesión. La tabla cubre los bloques de la primera
+entrega; los de las entregas siguientes están en §10.4.
 
 | Bloque de trabajo | Esfuerzo |
 |---|---|
@@ -503,3 +504,26 @@ de equipo. **Medio**: una o dos sesiones. **Bajo**: una sesión.
 | PySpark 3.5.x | Motor de procesamiento | — | fijado en D2 |
 
 No hay costos de infraestructura: todo el alcance del proyecto entra en los tiers gratuitos.
+
+### 10.4 Próximos pasos
+
+Bloques de trabajo posteriores a esta entrega, con la instancia en la que se evalúan y su esfuerzo
+estimado. El alcance sale de la consigna (§5.6, §6.2 y §7.2).
+
+| # | Bloque de trabajo | Entrega | Esfuerzo | Componente o referencia |
+|---|---|---|---|---|
+| 1 | Plan de correcciones a partir del feedback: prioridad, responsable, fecha objetivo y evidencia esperada | Posterior a la 1.ª | Bajo | Consigna §5.6 |
+| 2 | Validar la conexión con AstraDB y cerrar la decisión de serving | 2.ª · 16/11 | Bajo | R7 · decisiones abiertas |
+| 3 | Ingesta batch de al menos tres maestros a Bronze | 2.ª · 16/11 | Medio | `src/ingest/batch_masters.py` |
+| 4 | Ingesta streaming de eventos a Bronze, con watermark, deduplicación y checkpoint | 2.ª · 16/11 | **Alto** | `src/ingest/stream_events.py` |
+| 5 | Silver de eventos y de al menos un maestro, con joins y tres features | 2.ª · 16/11 | **Alto** | `src/silver/conform_events.py`, `src/silver/features.py` |
+| 6 | Reglas de calidad y Quarantine con muestras | 2.ª · 16/11 | Medio | `src/quality/rules.py` |
+| 7 | Mart `org_daily_usage_by_service` en Gold | 2.ª · 16/11 | Medio | `src/gold/marts.py` |
+| 8 | Keyspace, tabla query-first, carga desde Spark y dos consultas CQL | 2.ª · 16/11 | Medio | `src/serving/load_astra.py` |
+| 9 | Componente analítico; la opción preferida es anomalías de costo | 2.ª · 16/11 | Medio | `src/gold/anomalies.py` · D9 |
+| 10 | Demostración de idempotencia, pruebas, Quickstart y evidencias de ejecución | 2.ª · 16/11 | Medio | `tests/`, `evidence/`, README |
+| 11 | Gobierno preliminar y backlog final priorizado | 2.ª · 16/11 | Bajo | Consigna §6.2 |
+| 12 | Maestros restantes en Bronze y Silver | Final · 07/12 | Medio | `src/ingest/batch_masters.py` |
+| 13 | Marts restantes y sus tablas de serving, para responder P3 a P5 | Final · 07/12 | **Alto** | `src/gold/marts.py`, `src/serving/load_astra.py` |
+| 14 | Gobierno, linaje, seguridad y observabilidad completos; diccionario de datos | Final · 07/12 | Medio | D11 |
+| 15 | Presentación ejecutiva, video y defensa oral | Final · 07/12 | Medio | Consigna §7.5 |

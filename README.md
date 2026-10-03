@@ -22,7 +22,7 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
 │   ├── estado_entrega1.md    ← trazabilidad consigna → archivos
 │   ├── decisions.md
 │   ├── arquitectura_v1.svg / .png
-│   ├── diseno_v1.md
+│   ├── diseno_v1.md / .pdf
 │   ├── matriz_requisito_componente.md
 │   └── plan_inicial.md
 ├── evidence/                 ← logs, capturas y salidas de cada entrega

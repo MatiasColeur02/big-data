@@ -12,11 +12,11 @@ Estados: **Cubierto** · **Parcial** · **Pendiente**
 
 | # | Artefacto | Archivo | Estado | Observación |
 |---|---|---|---|---|
-| 1 | Documento de diseño | [`diseno_v1.md`](diseno_v1.md), exportado a PDF | Parcial | Redactado; sin exportar a PDF |
+| 1 | Documento de diseño | [`diseno_v1.md`](diseno_v1.md) · [`diseno_v1.pdf`](diseno_v1.pdf) | Cubierto | — |
 | 2 | Repositorio | [`../README.md`](../README.md) y estructura del repositorio | Cubierto | — |
 | 3 | Diagrama de arquitectura v1 | [`arquitectura_v1.svg`](arquitectura_v1.svg), exportado a PNG | Cubierto | — |
 | 4 | Matriz requisito-componente | [`matriz_requisito_componente.md`](matriz_requisito_componente.md) | Cubierto | — |
-| 5 | Plan inicial | [`plan_inicial.md`](plan_inicial.md) | Parcial | Sin la sección de próximos pasos |
+| 5 | Plan inicial | [`plan_inicial.md`](plan_inicial.md) | Cubierto | — |
 
 Documentos de apoyo:
 
@@ -78,7 +78,7 @@ Documentos de apoyo:
 Cierre del repositorio:
 
 - [x] Sin credenciales, tokens ni datos sensibles versionados
-- [ ] Documento de diseño exportado a PDF
+- [x] Documento de diseño exportado a PDF
 - [ ] Tag `v1.0-entrega1`
 
 ---

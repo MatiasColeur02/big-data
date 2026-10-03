@@ -12,9 +12,9 @@ Estados: **Cubierto** · **Parcial** · **Pendiente**
 
 | # | Artefacto | Archivo | Estado | Observación |
 |---|---|---|---|---|
-| 1 | Documento de diseño | [`diseno_v1.md`](diseno_v1.md), exportado a PDF | Parcial | Redactadas las secciones 1, 2 y 7 |
+| 1 | Documento de diseño | [`diseno_v1.md`](diseno_v1.md), exportado a PDF | Parcial | Redactado; sin exportar a PDF |
 | 2 | Repositorio | [`../README.md`](../README.md) y estructura del repositorio | Cubierto | — |
-| 3 | Diagrama de arquitectura v1 | [`arquitectura_v1.svg`](arquitectura_v1.svg), exportado a PNG | Parcial | PNG sin exportar |
+| 3 | Diagrama de arquitectura v1 | [`arquitectura_v1.svg`](arquitectura_v1.svg), exportado a PNG | Cubierto | — |
 | 4 | Matriz requisito-componente | [`matriz_requisito_componente.md`](matriz_requisito_componente.md) | Cubierto | — |
 | 5 | Plan inicial | [`plan_inicial.md`](plan_inicial.md) | Parcial | Sin la sección de próximos pasos |
 
@@ -34,12 +34,12 @@ Documentos de apoyo:
 |---|---|---|---|---|
 | 1 | Interpretación del problema, usuarios, preguntas y objetivos medibles | `diseno_v1.md` §1 | Cubierto | — |
 | 2 | Justificación de Big Data con las 5V | `diseno_v1.md` §2 · `matriz_requisito_componente.md` parte C | Cubierto | — |
-| 3 | Inventario y perfil de fuentes | `../evidence/profiling_landing.md` · `diseno_v1.md` §3 | Parcial | Medido en la evidencia; sin la tabla por fuente en el documento |
+| 3 | Inventario y perfil de fuentes | `../evidence/profiling_landing.md` · `diseno_v1.md` §3 | Cubierto | — |
 | 4 | Diagrama de arquitectura de alto nivel | `arquitectura_v1.svg` | Cubierto | — |
-| 5 | Selección justificada del patrón | `decisions.md` D1 · `diseno_v1.md` §4 | Parcial | Justificado en D1; sin incorporar al documento |
+| 5 | Selección justificada del patrón | `decisions.md` D1 · `diseno_v1.md` §4 | Cubierto | — |
 | 6 | Mapeo de requisitos a componentes y relación 5V ↔ decisiones | `matriz_requisito_componente.md` | Cubierto | — |
-| 7 | Diseño del Data Lake | `decisions.md` D3, D10, D11 y D12 · `diseno_v1.md` §5 | Parcial | Decidido; sin incorporar al documento |
-| 8 | Flujos batch y streaming, con herramientas específicas | `decisions.md` D2, D4, D5, D6 y D7 · `diseno_v1.md` §6 | Parcial | Decidido; sin incorporar al documento |
+| 7 | Diseño del Data Lake | `decisions.md` D3, D10, D11 y D12 · `diseno_v1.md` §5 | Cubierto | — |
+| 8 | Flujos batch y streaming, con herramientas específicas | `decisions.md` D2, D4, D5, D6 y D7 · `diseno_v1.md` §6 | Cubierto | — |
 | 9 | Flujo batch expresado con lógica MapReduce | `diseno_v1.md` §7 | Cubierto | — |
 | 10 | Supuestos, riesgos, mitigaciones y decisiones abiertas | `plan_inicial.md` §§1-2 · `decisions.md` | Cubierto | — |
 | 11 | Estimación de esfuerzo, roles y recursos | `plan_inicial.md` §3 | Cubierto | Esfuerzo expresado en tallas relativas |
@@ -66,10 +66,10 @@ Documentos de apoyo:
 - [x] Repositorio accesible y versionado
 - [x] Interpretación del caso y objetivos medibles
 - [x] Análisis 5V
-- [ ] Inventario y perfil de fuentes
-- [ ] Arquitectura v1 y patrón justificado
-- [ ] Diseño Landing/Bronze/Silver/Gold
-- [ ] Flujos batch y streaming
+- [x] Inventario y perfil de fuentes
+- [x] Arquitectura v1 y patrón justificado
+- [x] Diseño Landing/Bronze/Silver/Gold
+- [x] Flujos batch y streaming
 - [x] Lógica MapReduce o equivalente
 - [x] Matriz requisito-componente
 - [x] Supuestos, riesgos, mitigaciones y estimación de esfuerzo

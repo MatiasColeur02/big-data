@@ -65,8 +65,8 @@ puede predecir.
 | Matriz de trazabilidad | Medio | hecho |
 | Interpretación del problema, usuarios y objetivos | Bajo | hecho |
 | Metadatos de las zonas del Data Lake | Bajo | hecho |
-| Flujos batch y streaming, y lógica MapReduce | Medio | borrador |
-| Redacción e integración del documento de diseño | **Alto** | pendiente |
+| Flujos batch y streaming, y lógica MapReduce | Medio | hecho |
+| Redacción e integración del documento de diseño | **Alto** | hecho |
 | Revisión contra el checklist y ensayo de defensa | Bajo | pendiente |
 
 ### Recursos

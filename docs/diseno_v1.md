@@ -7,8 +7,71 @@
 > pide que "permita una revisión rápida".
 
 ## 1. Interpretación del problema
-Contexto, usuarios (FinOps / Soporte / Producto), preguntas principales y objetivos medibles.
-Las preguntas se derivan de las 5 consultas obligatorias de la consigna §7.4.
+
+### 1.1 Problema
+
+El equipo actúa como área de datos de un proveedor de nube. Tres áreas de negocio —FinOps, Soporte
+y Producto— necesitan analítica sobre los datos de sus clientes, pero las fuentes llegan crudas y
+no son consultables de forma directa: siete maestros en CSV y un flujo de eventos de uso
+fragmentado en 120 archivos JSONL, con nulos, tipos ambiguos, valores fuera de rango y un cambio
+de esquema a mitad del histórico (la versión 2 incorpora `carbon_kg` y `genai_tokens`).
+
+El problema es construir un pipeline que ingeste, limpie, conforme y publique esos datos con dos
+capacidades complementarias:
+
+| Capacidad | Datos | Necesidad que cubre |
+|---|---|---|
+| Near real-time | Eventos de uso (`usage_events_stream`) | Métricas operativas de uso, consumo y costo incremental |
+| Batch diario o mensual | Maestros de CRM, tickets, encuestas y facturación | Dimensiones de referencia, soporte y revenue |
+
+El resultado son marts analíticos en Parquet, publicados en Cassandra/AstraDB, que responden las
+preguntas de cada área sin acceder a los datos crudos.
+
+### 1.2 Usuarios
+
+| Usuario | Qué necesita | Actualización | Fuentes |
+|---|---|---|---|
+| FinOps | Costos, consumo, revenue, créditos, impuestos y anomalías por organización y servicio | Costos de uso: near real-time · Revenue: mensual | `usage_events_stream`, `billing_monthly.csv`, `resources.csv`, `customers_orgs.csv` |
+| Soporte | Volumen de tickets, severidad, cumplimiento de SLA y CSAT por organización y fecha | Diaria | `support_tickets.csv`, `customers_orgs.csv` |
+| Producto / Usage | Uso de servicios, requests, métricas operativas, tokens GenAI y carbono | Near real-time | `usage_events_stream`, `resources.csv` |
+
+`users.csv`, `marketing_touches.csv` y `nps_surveys.csv` se ingestan a Bronze como fuentes de
+referencia; ninguna de las cinco consultas obligatorias depende de ellas.
+
+### 1.3 Preguntas principales
+
+Son las cinco consultas obligatorias de la consigna (§7.4). Cada una se responde desde una tabla
+de serving propia (D8).
+
+| # | Pregunta | Usuario | Fuente | Mart en Gold | Ingesta |
+|---|---|---|---|---|---|
+| P1 | ¿Cuánto costó y cuántos requests tuvo cada organización, por servicio y por día, en un rango de fechas? | FinOps | `usage_events_stream` | `org_daily_usage_by_service` | Streaming |
+| P2 | ¿Cuáles son los N servicios de mayor costo acumulado de una organización en los últimos 14 días? | FinOps | `usage_events_stream` | `org_daily_usage_by_service` | Streaming |
+| P3 | ¿Cómo evolucionaron los tickets críticos y la tasa de incumplimiento de SLA, por día, en los últimos 30 días? | Soporte | `support_tickets.csv` | `tickets_by_org_date` | Batch |
+| P4 | ¿Cuál fue el revenue mensual de cada organización, con créditos e impuestos, normalizado a USD? | FinOps | `billing_monthly.csv` | `revenue_by_org_month` | Batch |
+| P5 | ¿Cuántos tokens GenAI consumió cada organización por día y a qué costo estimado? | Producto | `usage_events_stream` (v2) | `genai_tokens_by_org_date` | Streaming |
+
+Además, FinOps requiere identificar costos diarios anómalos por organización y servicio. Se resuelve
+en Gold con `cost_anomaly_mart` (D9).
+
+### 1.4 Objetivos medibles y criterios de éxito
+
+El proyecto cumple su propósito cuando se alcanzan las siete metas siguientes. Las metas se
+expresan sobre el dataset provisto; las cifras de referencia están medidas en
+`evidence/profiling_landing.md`.
+
+| # | Objetivo | Métrica | Meta | Verificación | Entrega |
+|---|---|---|---|---|---|
+| O1 | Responder las preguntas del negocio desde el serving | Preguntas P1–P5 respondidas en Cassandra/AstraDB leyendo una sola partición, sin `ALLOW FILTERING` | 5 de 5 | CQL y salida de cada consulta | 2.ª (P1 y P2) · final (P3 a P5) |
+| O2 | Ingestar los eventos sin pérdida | Eventos de Landing presentes en Bronze | 43.200 de 43.200 | Conteo Landing contra Bronze | 2.ª |
+| O3 | Ingestar los maestros sin pérdida | Filas de los 7 CSV presentes en Bronze | 4.112 de 4.112 | Conteo por fuente | 2.ª (3 maestros) · final (7) |
+| O4 | No perder registros entre zonas | Fechas que cumplen `bronze = silver + quarantine` | 60 de 60 | Conteo por `event_date` (D10) | 2.ª |
+| O5 | Aplicar las reglas de calidad | Reglas de D7 cuyo conteo de violaciones coincide con el medido en el perfilado | 7 de 7 | Conteo por regla en Silver y Quarantine | 2.ª (3 reglas) · final (7) |
+| O6 | Reprocesar sin duplicar | Diferencia de filas por zona entre dos ejecuciones consecutivas · `event_id` duplicados | 0 · 0 | Conteos antes y después de re-ejecutar | 2.ª |
+| O7 | Mantener las métricas de uso en near real-time | Micro-lotes hasta que un archivo de eventos queda disponible en Bronze | 1, con trigger de 10 s | Progreso de la consulta de streaming | 2.ª |
+
+La trazabilidad de cada objetivo con el componente que lo cumple está en la parte D de
+`matriz_requisito_componente.md`.
 
 ## 2. Justificación de Big Data · las 5V
 

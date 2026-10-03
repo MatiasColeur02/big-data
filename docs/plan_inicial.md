@@ -63,7 +63,7 @@ puede predecir.
 | Decisiones de arquitectura y diseño del Data Lake | **Alto** | hecho |
 | Diagrama de arquitectura v1 | Medio | hecho |
 | Matriz de trazabilidad | Medio | hecho |
-| Interpretación del problema, usuarios y objetivos | Bajo | pendiente |
+| Interpretación del problema, usuarios y objetivos | Bajo | hecho |
 | Metadatos de las zonas del Data Lake | Bajo | pendiente |
 | Flujos batch y streaming, y lógica MapReduce | Medio | borrador |
 | Redacción e integración del documento de diseño | **Alto** | pendiente |

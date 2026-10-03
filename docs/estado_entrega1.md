@@ -12,10 +12,10 @@ Estados: **Cubierto** · **Parcial** · **Pendiente**
 
 | # | Artefacto | Archivo | Estado | Observación |
 |---|---|---|---|---|
-| 1 | Documento de diseño | [`diseno_v1.md`](diseno_v1.md), exportado a PDF | Parcial | Redactadas las secciones 2 y 7 |
+| 1 | Documento de diseño | [`diseno_v1.md`](diseno_v1.md), exportado a PDF | Parcial | Redactadas las secciones 1, 2 y 7 |
 | 2 | Repositorio | [`../README.md`](../README.md) y estructura del repositorio | Cubierto | — |
 | 3 | Diagrama de arquitectura v1 | [`arquitectura_v1.svg`](arquitectura_v1.svg), exportado a PNG | Parcial | PNG sin exportar |
-| 4 | Matriz requisito-componente | [`matriz_requisito_componente.md`](matriz_requisito_componente.md) | Parcial | Sin la columna de objetivos medibles |
+| 4 | Matriz requisito-componente | [`matriz_requisito_componente.md`](matriz_requisito_componente.md) | Cubierto | — |
 | 5 | Plan inicial | [`plan_inicial.md`](plan_inicial.md) | Parcial | Sin la sección de próximos pasos |
 
 Documentos de apoyo:
@@ -32,7 +32,7 @@ Documentos de apoyo:
 
 | # | Punto | Archivo | Estado | Observación |
 |---|---|---|---|---|
-| 1 | Interpretación del problema, usuarios, preguntas y objetivos medibles | `diseno_v1.md` §1 | Pendiente | — |
+| 1 | Interpretación del problema, usuarios, preguntas y objetivos medibles | `diseno_v1.md` §1 | Cubierto | — |
 | 2 | Justificación de Big Data con las 5V | `diseno_v1.md` §2 · `matriz_requisito_componente.md` parte C | Cubierto | — |
 | 3 | Inventario y perfil de fuentes | `../evidence/profiling_landing.md` · `diseno_v1.md` §3 | Parcial | Medido en la evidencia; sin la tabla por fuente en el documento |
 | 4 | Diagrama de arquitectura de alto nivel | `arquitectura_v1.svg` | Cubierto | — |
@@ -51,7 +51,7 @@ Documentos de apoyo:
 
 | Criterio | Estado | Sustento |
 |---|---|---|
-| El problema, los usuarios y los criterios de éxito están formulados sin ambigüedad | Pendiente | `diseno_v1.md` §1 |
+| El problema, los usuarios y los criterios de éxito están formulados sin ambigüedad | Cubierto | `diseno_v1.md` §1 |
 | La arquitectura responde a los requisitos y distingue claramente batch y streaming | Cubierto | `arquitectura_v1.svg` · `decisions.md` D1 |
 | Las zonas del Data Lake, formatos y particiones son coherentes con los datos provistos | Cubierto | `decisions.md` D3 y D10 |
 | El flujo MapReduce muestra cómo se resolvería el procesamiento batch del caso | Cubierto | `diseno_v1.md` §7 |
@@ -64,14 +64,14 @@ Documentos de apoyo:
 
 - [ ] Documento de diseño disponible en el canal de entrega
 - [x] Repositorio accesible y versionado
-- [ ] Interpretación del caso y objetivos medibles
+- [x] Interpretación del caso y objetivos medibles
 - [x] Análisis 5V
 - [ ] Inventario y perfil de fuentes
 - [ ] Arquitectura v1 y patrón justificado
 - [ ] Diseño Landing/Bronze/Silver/Gold
 - [ ] Flujos batch y streaming
 - [x] Lógica MapReduce o equivalente
-- [ ] Matriz requisito-componente
+- [x] Matriz requisito-componente
 - [x] Supuestos, riesgos, mitigaciones y estimación de esfuerzo
 - [x] Evidencia mínima de lectura/exploración de datos
 

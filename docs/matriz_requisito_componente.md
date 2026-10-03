@@ -2,7 +2,7 @@
 
 **Primera entrega · 05/10/2026**
 
-Trazabilidad entre lo que pide la consigna y lo que propone la solución. Tiene tres partes, porque el punto 6 del alcance (§5.2) pide dos cosas distintas —requisitos a componentes **y** las 5V a las decisiones de arquitectura— y §5.3 agrega la trazabilidad desde los objetivos del negocio.
+Trazabilidad entre lo que pide la consigna y lo que propone la solución. Tiene cuatro partes: el punto 6 del alcance (§5.2) pide dos cosas distintas —requisitos a componentes **y** las 5V a las decisiones de arquitectura— y §5.3 agrega la trazabilidad desde las preguntas y los objetivos del negocio.
 
 Las decisiones citadas (D1–D10) están en [`decisions.md`](decisions.md).
 
@@ -55,6 +55,16 @@ La veracidad es la dimensión más cargada en este dataset: cuatro de las siete 
 
 ---
 
-## Qué falta
+## D · Objetivos medibles → componentes
 
-La columna de **objetivos medibles** todavía no se puede completar: depende del punto 1 del alcance (interpretación del problema), que está pendiente. Cuando esté, se agrega una fila por objetivo en la parte A, enlazándolo con la pregunta y el mart que lo miden.
+Los objetivos O1 a O7 están definidos en [`diseno_v1.md`](diseno_v1.md) §1.4, con su métrica, meta y verificación.
+
+| Objetivo | Componente que lo cumple | Decisión | Relación con las partes A y B |
+|---|---|---|---|
+| O1 · Responder las preguntas del negocio desde el serving | Tablas query-first en Cassandra · `src/serving/load_astra.py` | D8 | A1 a A5 · B8 |
+| O2 · Ingestar los eventos sin pérdida | `src/ingest/stream_events.py`, con watermark de 60 días | D4, D6 | B2 |
+| O3 · Ingestar los maestros sin pérdida | `src/ingest/batch_masters.py` | D2, D3 | B1 |
+| O4 · No perder registros entre zonas | Regla de promoción entre zonas | D10 | B4, B9 |
+| O5 · Aplicar las reglas de calidad | `src/quality/rules.py` y Quarantine | D7 | B3 |
+| O6 · Reprocesar sin duplicar | Checkpoints, `overwrite` dinámico por partición y anti-join | D6, D10 | B9 |
+| O7 · Mantener las métricas de uso en near real-time | Structured Streaming con trigger de 10 s | D1, D6 | B2 |

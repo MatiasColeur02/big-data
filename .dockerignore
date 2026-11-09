@@ -1,0 +1,3 @@
+# La imagen solo necesita requirements.txt: el repo se monta como volumen en /workspace.
+*
+!requirements.txt

@@ -1,6 +1,6 @@
 # DECISIONS
 
-**Cloud Provider Analytics · ITBA Big Data 2C 2026** · v1.2
+**Cloud Provider Analytics · ITBA Big Data 2C 2026** · v1.3 (D13–D20, segunda entrega)
 
 > Cifras verificadas sobre el **dataset completo** (120 partes, 43.200 eventos). Fuente: `evidence/profiling_landing.md`.
 
@@ -19,6 +19,8 @@ La consigna exige streaming de eventos y batch de maestros (§4.3). Kappa obliga
 ---
 
 ## D2 · Entorno: Colab + PySpark **3.5.x** + Drive
+
+> **Actualizada por D17:** el entorno principal pasa a ser local (venv + Cassandra en Docker) y Colab + AstraDB queda como segundo perfil.
 
 `master("local[*]")`, Data Lake en `/content/drive/MyDrive/bigdata_itba/datalake/`.
 
@@ -41,7 +43,7 @@ Eventos por `event_date`. Maestros chicos sin particionar (`coalesce(1)`). `bill
 
 Un bloque HDFS son 128 MB: incluso la mejor opción da archivos 4.000× más chicos, así que estamos en pleno *small files problem*. Particionar por servicio lo multiplica por seis sin ganar poda, porque las 5 consultas obligatorias filtran todas por organización y fecha, y ninguna por servicio solo.
 
-Se acepta el costo de archivos chicos a cambio de poda temporal (las consultas piden "últimos 14/30 días") y de un layout que escala. Se compacta Bronze con un job posterior.
+Se acepta el costo de archivos chicos a cambio de poda temporal (las consultas piden "últimos 14/30 días") y de un layout que escala. ~~Se compacta Bronze con un job posterior.~~ **Actualizado por D13:** Bronze no se compacta en el lugar; la compactación ocurre al escribir Silver.
 
 **No por `org_id`:** 80 orgs × 60 días = 4.800 particiones de 9 filas. `org_id` es la clave de partición en Cassandra (D8), no en el lago.
 
@@ -68,6 +70,8 @@ La unión es *additive*: v2 solo agrega campos. El corte es limpio, sin solapami
 ## D6 · Watermark de **60 días** — cualquier valor menor destruye el dataset
 
 `withWatermark("event_ts", "60 days")` + `dropDuplicatesWithinWatermark("event_id")`. La idempotencia real se apoya en el checkpoint y un anti-join contra Bronze, **no** en el watermark.
+
+> **Actualizada por D13:** el anti-join se descarta. La idempotencia sale del checkpoint y de `_spark_metadata/` del file sink, y la regla de `event_id` único en Silver actúa como red de seguridad.
 
 **El dataset no está ordenado temporalmente.** Cada archivo contiene los 60 días barajados: las primeras líneas de `events_part_0000.jsonl` son del 17/08, 16/07, 18/08, 29/07 y 11/08. En el primer micro-lote Spark ya ve un evento del 31/08 y el watermark salta al máximo.
 
@@ -158,7 +162,7 @@ datalake/
 
 `_checkpoints/` afuera porque si vive dentro de `bronze/`, un `spark.read.parquet()` lo intenta leer y rompe.
 
-**Promoción:** `overwrite` por partición (`partitionOverwriteMode=dynamic`), no global — es lo que permite reprocesar un día sin borrar el histórico, y es el mecanismo concreto detrás de la idempotencia. Ninguna fecha pasa a Gold si su Silver no está completa, y se verifica con `count(bronze[d]) == count(silver[d]) + count(quarantine[d])`.
+**Promoción:** `overwrite` por partición (`partitionOverwriteMode=dynamic`) en Silver y Gold (Bronze de eventos usa `append`, ver D13), no global — es lo que permite reprocesar un día sin borrar el histórico, y es el mecanismo concreto detrás de la idempotencia. Ninguna fecha pasa a Gold si su Silver no está completa, y se verifica con `count(bronze[d]) == count(silver[d]) + count(quarantine[d])`.
 
 **Repo:** la estructura recomendada por la consigna §8.1, con el registro de decisiones dentro de `docs/`. Nombres de marts en Gold iguales a los de la consigna, para no tener que documentar correspondencias. El dataset (13 MB) sí se commitea; las zonas generadas y cualquier credencial, nunca.
 
@@ -181,7 +185,7 @@ Columnas técnicas por zona:
 | Landing | Ninguna: los archivos no se modifican | El nombre y la ruta del archivo son el metadato |
 | Bronze | `ingest_ts`, `source_file` | Saber cuándo y desde qué archivo entró cada fila |
 | Silver | Las de Bronze y `dq_flags` | Conservar el origen y saber qué reglas de D7 marcaron la fila |
-| Quarantine | Las de Bronze, `dq_rule` y `rejected_ts` | Saber qué regla rechazó cada fila y cuándo |
+| Quarantine | Las de Bronze, `dq_rule`, `rejected_ts` y `event_date` (D16) | Saber qué regla rechazó cada fila y cuándo, y cerrar O4 por fecha |
 | Gold | `processed_ts` | Saber cuándo se calculó cada fila del mart |
 
 `ingest_ts` y `source_file` son las columnas que exige la consigna (§4.2). `dq_flags` es una lista con los identificadores de las reglas `MARCA` de D7 que se aplicaron a la fila. `dq_rule` es la regla `BLOQUEA` que la rechazó y es además la columna de partición de Quarantine (D10). Los eventos conservan `schema_version` como columna (D5).
@@ -229,6 +233,182 @@ La forma `<columna>=<valor>` es la que Spark genera con `partitionBy` y la que l
 
 ---
 
+## D13 · Bronze de eventos con **file sink nativo**, no `foreachBatch` con overwrite
+
+`writeStream.format("parquet").partitionBy("event_date").outputMode("append")`, con checkpoint en `_checkpoints/bronze_usage_events/`.
+
+Cada JSONL trae eventos de los 60 días mezclados (D6), así que cada micro-lote toca casi todas las particiones. Con `foreachBatch` y `partitionOverwriteMode=dynamic`, el lote *n* reemplaza las particiones que escribió el lote *n−1*: al terminar, Bronze tendría solo los eventos del último lote, y Spark no da ningún error.
+
+| Opción | Garantía | Problema |
+|---|---|---|
+| **File sink `append`** | Exactly-once: el checkpoint registra qué archivos se leyeron y `_spark_metadata/` qué archivos se escribieron | Muchos archivos chicos |
+| `foreachBatch` + overwrite dinámico | Ninguna | Pisa los lotes anteriores |
+| `foreachBatch` + `append` | At-least-once: si falla después de escribir, el lote se repite | Hay que deduplicar por `batch_id` a mano |
+
+**Reglas que se derivan:**
+
+- **El checkpoint y la salida se borran siempre juntos.** Si se borra solo el checkpoint, la consulta vuelve a numerar los lotes desde 0, el sink los encuentra ya registrados en `_spark_metadata/` y no escribe nada. Si se borra solo la salida, el checkpoint da los 120 archivos por leídos y Bronze queda vacío. Ninguno de los dos casos da error.
+- **Bronze se lee siempre desde la raíz** (`bronze/usage_events_stream/`) y se filtra por `event_date`. Así Spark usa `_spark_metadata/` y descarta los archivos de lotes que fallaron a mitad de camino. Si se lee directo la carpeta de una partición, ese control se pierde.
+- **`repartition("event_date")` antes de escribir:** un archivo por fecha y por lote, como máximo 60 × 24 = 1.440. Sin eso, cada una de las 8 tareas del shuffle de la deduplicación escribe en cada fecha y se llega a 11.520 archivos.
+- **Bronze no se compacta en el lugar (actualiza D3):** si se reescriben los archivos, `_spark_metadata/` queda apuntando a archivos que ya no existen. La compactación pasa a Silver, que reescribe cada fecha en un solo archivo.
+- **La idempotencia del stream sale del checkpoint y de `_spark_metadata/` (actualiza D6):** se descarta el anti-join contra Bronze porque el file sink no admite lógica por lote. Si un duplicado llega después de que venció el watermark, lo bloquea la regla de `event_id` único en Silver (D7).
+- **`spark.sql.shuffle.partitions` queda fijo** desde la primera corrida: define cuántas particiones tiene el estado de la deduplicación y se guarda en el checkpoint. Para cambiarlo hay que reprocesar desde cero.
+
+El overwrite dinámico (D10) queda solo para Silver y Gold, que son batch.
+
+---
+
+## D14 · Top-N: **`TRUNCATE` y recarga completa** de `org_service_cost_14d`
+
+En `org_service_cost_14d` la clave primaria es `(org_id, total_cost_usd, service)` (D8). Un upsert no reemplaza la fila: si el total cambia (por un evento tardío, una regla nueva o un fixture), la recarga inserta una fila nueva y la vieja sigue ahí. P2 mostraría el mismo servicio dos veces, con dos totales distintos.
+
+Antes de cada carga se vacía la tabla con `TRUNCATE` desde `cassandra-driver`, porque el connector de Spark solo inserta. Son **262 filas**: las 262 combinaciones org × servicio que existen en el dataset, y todas tienen actividad en los últimos 14 días. El máximo teórico de 480 (80 × 6) no se alcanza.
+
+**Orden:** (1) calcular el Top-N en Spark y materializarlo, (2) `TRUNCATE`, (3) escribir. Si el cálculo falla, la tabla queda como estaba. Entre los pasos 2 y 3 la tabla está vacía, algo aceptable en una carga batch sin lectores concurrentes.
+
+| Alternativa | Por qué no |
+|---|---|
+| Sacar `total_cost_usd` de la clave | P2 tendría que ordenar en el cliente o usar `ALLOW FILTERING` (D8) |
+| `DELETE ... WHERE org_id = ?` antes de cargar cada org | El resultado es el mismo con 80 sentencias en vez de una. Solo conviene con cargas parciales por org, que no hacemos |
+
+La tabla suma `as_of_date` como columna regular, fuera de la clave, para que quien consulte sepa qué ventana se usó (D15).
+
+`org_daily_usage_by_service` no lo necesita: su clave `(org_id, usage_date, service)` no incluye métricas, así que la recarga es un upsert puro.
+
+---
+
+## D15 · Fecha de referencia `as_of_date` y fechas en **UTC**
+
+Las ventanas de "últimos N días" se calculan contra `as_of_date`, nunca contra `current_date()`. Se toma de `analysis.as_of_date` en la config; si está vacío, se usa `max(event_date)` de Silver: **2025-08-31**.
+
+Con `current_date()`, en noviembre de 2026 los últimos 14 días no tienen eventos y P2 devuelve vacío. Además, el resultado cambiaría según el día de la corrida, lo que rompe la idempotencia (O6).
+
+Las ventanas incluyen los dos extremos: 14 días = `[as_of − 13, as_of]` = 18/08 → 31/08; 30 días = 02/08 → 31/08. El `as_of_date` usado se guarda en el registro de corridas (D11) y en la tabla del Top-N (D14).
+
+**UTC:** `spark.sql.session.timeZone=UTC` en los dos perfiles. El `timestamp` del JSON viene en UTC (`...Z`), pero `to_date(event_ts)` usa la zona horaria de la sesión. En una máquina configurada en Argentina (UTC−3), los **5.455 eventos (12,6 %)** registrados entre las 00:00 y las 02:59 UTC caerían en el día anterior. Dejarían de coincidir las 60 particiones, los conteos por fecha de O4 y las cifras del perfilado, que cortó por el prefijo del string (o sea, en UTC). Colab corre en UTC y una máquina local normalmente no: es justo el tipo de diferencia entre perfiles que D17 tiene que eliminar.
+
+---
+
+## D16 · Quarantine de eventos lleva `event_date`
+
+Quarantine se particiona por `dq_rule` (D10, D12) y guarda `event_date` como columna, derivada con la misma expresión que en Bronze (`to_date(event_ts)` en UTC, D15). Actualiza la fila de Quarantine en la tabla de D11: columnas de Bronze, `dq_rule`, `rejected_ts` y `event_date`.
+
+Sin esa columna, el control `count(bronze[d]) == count(silver[d]) + count(quarantine[d])` (O4) solo se puede hacer sobre el total y no por fecha: un error que mueva eventos de un día a otro pasaría sin detectarse.
+
+Para que la ecuación cierre:
+
+- **Fecha nula:** si `event_ts` es nulo, `event_date` también lo es. El control trata el nulo como una fecha más (join null-safe con `<=>`) para no dejar esas filas fuera de la cuenta. Hoy el dataset no tiene timestamps nulos.
+- **Una sola regla por fila:** si un evento viola dos reglas `BLOQUEA`, entra a Quarantine una sola vez, con la primera en este orden: `event_id_null` → `event_id_duplicate` → `value_not_castable`.
+- **Duplicados:** de cada `event_id` repetido queda en Silver la fila con menor `ingest_ts`; las demás van a Quarantine.
+
+---
+
+## D17 · Dos perfiles de ejecución: **local** y **cloud** (actualiza D2)
+
+| | Local · fase 1, principal | Cloud · fase 2 |
+|---|---|---|
+| Ejecución | Docker Compose (`docker-compose.yml`): contenedor `spark` con Python 3.11, Java 17 y PySpark 3.5.9 en `local[*]`. Alternativa: venv propio con esas versiones | Notebook en Colab |
+| Data Lake | `data/datalake/` en el repo, montado en el contenedor (las zonas generadas ya están en `.gitignore`) | Se decide en la fase 2, ver abajo |
+| Serving | Cassandra 4.1.12 en el mismo Compose | AstraDB |
+| Config | `config/pipeline.local.yaml` | `config/pipeline.cloud.yaml` |
+
+**Por qué cambia D2:** D2 fijaba Colab como único entorno. Desarrollar ahí obliga a reinstalar todo en cada sesión y a depender de la conectividad con Astra. Cassandra en Docker se levanta sin cuenta ni token y permite iterar rápido. La consigna acepta Colab "o un entorno equivalente validado" (§2.2). Colab + Astra se mantiene como segundo perfil porque la entrega final exige demo remota, y además puede volverse obligatorio en esta entrega según la respuesta a B4.
+
+**Por qué Spark también va en Docker y no en un venv:** PySpark 3.5 no soporta oficialmente Java 21 ni Python 3.12+, que son justamente las versiones que traen hoy macOS y Homebrew (la primera máquina en la que se probó tenía Python 3.14 y Java 21). Con el contenedor, los cinco integrantes y quien corrija ejecutan con las mismas versiones en macOS, Windows o Linux, y el único requisito del "entorno limpio" (§6.4) pasa a ser Docker. El venv queda como alternativa para quien ya tenga Python 3.11 y Java 17. Uso y problemas conocidos en [`infra/README.md`](../infra/README.md).
+
+**Versiones:** fijas en `requirements.txt` (PySpark 3.5.9, cassandra-driver 3.30.1) y en `infra/spark/Dockerfile` (`spark-cassandra-connector_2.12:3.5.1`, que se descarga al construir la imagen). `infra/check_env.py` las verifica (B2, B3).
+
+**Reglas de portabilidad** que el código de la fase 1 tiene que cumplir:
+
+1. **Ninguna ruta ni host hardcodeado:** todo sale de la config, que admite variables de entorno con valor por defecto (`host: "${CASSANDRA_HOST:-localhost}"`). Así el mismo perfil `local` sirve dentro del contenedor (Compose define `CASSANDRA_HOST=cassandra`) y desde un venv (`localhost`). Las rutas relativas se resuelven contra la raíz del repo y no contra el directorio de trabajo, para que el notebook (que corre en `notebooks/`) y pytest (que corre en la raíz) usen el mismo lake.
+2. **Elección del perfil:** con `PIPELINE_PROFILE=local|cloud` o por argumento. Si no se indica, `local`.
+3. **Un solo punto de conexión:** `serving.provider: cassandra | astradb` y una única función que arma las opciones tanto para Spark como para `cassandra-driver`:
+
+   | | `cassandra` | `astradb` |
+   |---|---|---|
+   | Spark connector | `spark.cassandra.connection.host` y `.port` | `spark.cassandra.connection.config.cloud.path` (bundle), `spark.cassandra.auth.username=token`, `spark.cassandra.auth.password` desde `ASTRA_DB_TOKEN` |
+   | `cassandra-driver` | `Cluster([host], port=port)` | `Cluster(cloud={"secure_connect_bundle": ruta}, auth_provider=PlainTextAuthProvider("token", token))` |
+
+4. **La lógica vive en `src/`:** el notebook solo importa y llama, nunca define transformaciones.
+5. **Credenciales solo por variables de entorno** (`ASTRA_DB_TOKEN`). El YAML guarda la ruta del bundle, nunca el token. Si la variable falta, el pipeline falla con un mensaje claro antes de crear la sesión de Spark.
+6. **Dos plantillas versionadas,** `pipeline.local.example.yaml` y `pipeline.cloud.example.yaml`, que reemplazan a `pipeline.example.yaml`. Las copias sin `.example` van a `.gitignore`; hoy solo está la local.
+7. **Keyspace:** en Docker lo crea `cql/01_keyspace.cql`; en Astra se crea desde la consola, porque Astra no permite `CREATE KEYSPACE` por CQL. `cql/02_tables.cql` es el mismo en los dos.
+
+**Data Lake en Colab** (se cierra en la fase 2). La inclinación es el disco de la sesión. D2 elegía Drive para no perder Bronze ni los checkpoints entre sesiones, pero la demostración de idempotencia son dos corridas seguidas en la misma sesión y el lake se regenera desde Landing en minutos. Drive montado no garantiza renames atómicos, y el checkpoint y `_spark_metadata/` dependen de ellos para confirmar cada lote.
+
+---
+
+## D18 · Trigger `availableNow` para el pipeline, `processingTime` para la demo
+
+El pipeline usa `trigger(availableNow=True)` + `awaitTermination()`: procesa todo lo que está disponible al arrancar en **24 micro-lotes** (120 archivos con `maxFilesPerTrigger=5`) y termina solo, así que el notebook pasa a Silver sin intervención.
+
+| Trigger | Respeta `maxFilesPerTrigger` | Termina solo |
+|---|---|---|
+| `processingTime="10 seconds"` | Sí | No: hay que pararlo a mano |
+| `once=True` | No: un solo lote con los 120 archivos. Deprecado desde Spark 3.4 | Sí |
+| **`availableNow=True`** | **Sí** | **Sí** |
+
+Mantener los micro-lotes importa: así el watermark avanza entre lotes y aparece late data para medir (D6, D20).
+
+`processingTime="10 seconds"` queda para la demo de near real-time (O7): se corre contra el sandbox de D20, se agrega un archivo y se muestra que aparece en Bronze en el micro-lote siguiente.
+
+**Métricas:** se leen de `query.recentProgress`, que tiene todos los lotes, y no de `lastProgress`, que solo tiene el último. Se suman `numInputRows`, `stateOperators[].numRowsDroppedByWatermark` y `stateOperators[].customMetrics.numDroppedDuplicateRows`, y el total va al registro de corridas (D11). `recentProgress` guarda 100 lotes por defecto (`spark.sql.streaming.numRecentProgressUpdates`), más que los 24 de una corrida.
+
+---
+
+## D19 · `value` nulo: **se conserva sin imputar**
+
+877 eventos (2,03 %) llegan con `value` nulo: 399 de `requests`, 283 de `storage_gb_hours` y 195 de `cpu_hours`, repartidos en las 60 fechas. **Todos tienen `cost_usd_increment`:** suman 2.968 USD, el 2,01 % del costo total.
+
+- **El evento pasa a Silver** con `value` nulo y la marca `value_null` en `dq_flags`. No es una regla `BLOQUEA`: `value_not_castable` (D7) se aplica solo cuando `value IS NOT NULL AND try_cast(value AS DOUBLE) IS NULL`. Sin esa condición, los 877 eventos irían a Quarantine y se llevarían su costo.
+- **El costo se suma siempre.**
+- **Las métricas de uso** (`requests`, `cpu_hours`, `storage_gb_hours`) suman solo los valores no nulos, que es lo que `sum` hace por defecto. El mart agrega `value_null_events`, con la cantidad de eventos sin medición en cada grupo.
+- **Si todos los eventos de un grupo tienen `value` nulo, la métrica queda nula y no en 0.** Pasa en 68 de las 9.634 combinaciones `(org_id, usage_date, service)` que tienen eventos de `requests`.
+
+| Alternativa | Por qué no |
+|---|---|
+| Imputar 0 | Afirma "0 requests" en un grupo que generó costo, subestima la métrica y no se distingue de un cero real |
+| Imputar la mediana del recurso | Inventa una medición que la fuente no tiene |
+| Mandar a Quarantine | Pierde 2.968 USD de costo que sí es válido |
+
+Se aplica el mismo criterio que con `unit` (D7), aunque el resultado es el opuesto: `unit` se imputa porque se deduce de la métrica sin ambigüedad, mientras que `value` no se puede deducir de nada.
+
+---
+
+## D20 · Fixtures en un **sandbox** separado del lake principal
+
+Las dos reglas `BLOQUEA` tienen 0 violaciones en el dataset real (D7) y el watermark de 60 días descarta 0 eventos (D6). Si se corren solo los datos reales, Quarantine queda vacía y no se ve late data. La consigna pide "quarantine con muestras" (§6.2) y "ejemplos verificables" (§6.4).
+
+Los fixtures son JSONL chicos versionados en `data/fixtures/`, fuera de Landing. Se procesan en un lake aparte, `data/sandbox/`, con el mismo código y otra raíz en la config. El lake principal procesa solo los 43.200 eventos reales.
+
+| Opción | Ventaja | Problema |
+|---|---|---|
+| **Sandbox separado** | O2 (43.200 de 43.200) y O4 se verifican sobre los datos reales sin descontar fixtures | Una corrida más |
+| Fixtures en la corrida principal | Una sola corrida | Landing no se puede modificar (§3.2), así que hace falta un segundo origen. Los conteos dejan de coincidir con el perfilado y cada control tiene que filtrar por `source_file` |
+| Solo pytest | Simple | No deja Quarantine en Parquet ni progreso del stream como evidencia |
+
+**Secuencia en el sandbox:**
+
+1. Copiar 5 archivos reales y `fixtures_calidad.jsonl` a `data/sandbox/landing/usage_events_stream/`.
+2. Correr el pipeline con `availableNow`. Como esos archivos traen eventos del 31/08, el watermark queda en 31/08 − 60 días = **02/07**.
+3. Agregar `fixtures_tardios.jsonl` y volver a correr el stream. El watermark se guarda en el checkpoint, así que el archivo nuevo se evalúa contra él.
+
+| Fixture | Dónde se ve | Resultado esperado |
+|---|---|---|
+| `event_id` nulo (un solo evento) | Quarantine `event_id_null` | 1 fila |
+| `event_id` igual al de un evento real de los 5 archivos copiados | Deduplicación del stream en Bronze | `numDroppedDuplicateRows` = 1; no llega a Silver |
+| `value` = `"abc"` y `"1,5"` | Quarantine `value_not_castable` | 2 filas |
+| `cost_usd_increment` = −5.0 | Silver, marca de costo negativo (`MARCA`) | 1 fila marcada |
+| `unit` nula con `value` | Silver, `unit` imputada y marcada | 1 fila |
+| Evento del 15/07 en el lote tardío | Bronze: dentro del watermark | Entra (late data aceptada) |
+| Evento del 15/06 en el lote tardío | Bronze: fuera del watermark | `numRowsDroppedByWatermark` = 1 |
+
+Hay **un solo** evento con `event_id` nulo porque la deduplicación agrupa todos los nulos como una misma clave: con dos, uno se perdería en Bronze sin llegar a Quarantine. Se verifica en los tests. La regla `event_id_duplicate` de Silver no se puede alcanzar por el stream mientras el watermark retenga la clave, así que se prueba en pytest con un DataFrame armado a mano.
+
+**Evidencia:** las muestras de `data/sandbox/quarantine/` y las métricas del stream van a `evidence/entrega2/`. En el lake principal, que Quarantine esté vacía es el resultado esperado y se documenta así, porque coincide con las 0 violaciones del perfilado (O5). Se escribe igual y se lee con esquema explícito: sin archivos Parquet, Spark no puede inferirlo. `data/sandbox/` va a `.gitignore`.
+
+---
+
 ## Hallazgos del perfilado
 
 47.312 filas, 12,6 MB, 60 días (03/07 → 31/08/2025). Detalle completo en `evidence/profiling_landing.md`.
@@ -245,15 +425,21 @@ En consecuencia, el join con `dim_resource` **no** es necesario para conformar; 
 
 ## Decisiones abiertas
 
-Decisiones no tomadas a la fecha de la entrega, con su fecha límite y la opción preferida.
+Decisiones no tomadas a la fecha, con su fecha límite y la opción preferida.
 
 | Pregunta | Se decide antes de | Inclinación |
 |---|---|---|
-| ¿AstraDB o Cassandra en Docker? | 16/11 | AstraDB, por la modalidad remota |
-| ¿El componente de ML es anomalías o churn? | 16/11 | Anomalías: reutiliza D9 y alimenta un mart ya pedido |
-| ¿SCD tipo 2 en `dim_org`? | 16/11 | No: el dataset no trae historia de cambios de plan |
+| ¿Data Lake de Colab en el disco de la sesión o en Drive? | Fase 2 | Disco de la sesión (D17) |
 | ¿Herramienta de visualización? | 07/12 | Notebook con matplotlib |
 | ¿Airflow o notebook secuencial? | 07/12 | Secuencial: Airflow en Colab es overhead sin beneficio |
+
+### Cerradas en la segunda entrega
+
+| Pregunta | Decisión |
+|---|---|
+| ¿AstraDB o Cassandra en Docker? | Las dos, en fases: Cassandra en Docker para el perfil local y AstraDB para el perfil cloud (D17) |
+| ¿El componente de ML es anomalías o churn? | Anomalías con MAD (D9): reutiliza el análisis del perfilado y alimenta `cost_anomaly_mart`, que es un mart que la consigna ya pide |
+| ¿SCD tipo 2 en `dim_org`? | No. `customers_orgs.csv` es una sola foto, sin historia de cambios de plan: `dim_org` es SCD tipo 1 y se reemplaza en cada carga |
 
 ---
 

@@ -1,0 +1,72 @@
+# Entorno local completo (D17): `docker compose up -d` y abrir http://localhost:8888
+#
+#   cassandra       Serving. Datos en el volumen `cassandra_data` (se borra con `down -v`).
+#   cassandra-init  Aplica el esquema CQL cuando Cassandra está sana y termina.
+#   spark           Python 3.11 + Java 17 + PySpark 3.5 con el connector. Corre JupyterLab y
+#                   sirve para comandos sueltos: `docker compose run --rm spark <comando>`.
+#
+# Los puertos se publican solo en 127.0.0.1: Jupyter corre sin token.
+
+name: cloud-analytics
+
+services:
+  cassandra:
+    image: cassandra:4.1.12
+    environment:
+      CASSANDRA_CLUSTER_NAME: cloud-analytics
+      # Heap acotado para que entre en la memoria por defecto de Docker Desktop.
+      MAX_HEAP_SIZE: 1G
+      HEAP_NEWSIZE: 200M
+    ports:
+      - "127.0.0.1:9042:9042"
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES' > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 40s
+
+  cassandra-init:
+    image: cassandra:4.1.12
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    volumes:
+      - ./src/serving/cql:/cql:ro
+    # Solo el esquema. Los scripts son idempotentes (IF NOT EXISTS); 03_queries.cql no se aplica acá.
+    entrypoint:
+      - bash
+      - -c
+      - |
+        for f in /cql/01_keyspace.cql /cql/02_tables.cql; do
+          [ -f "$$f" ] || continue
+          echo "aplicando $$f"
+          cqlsh cassandra 9042 -f "$$f" || exit 1
+        done
+        echo "esquema aplicado"
+    restart: "no"
+
+  spark:
+    build:
+      context: .
+      dockerfile: infra/spark/Dockerfile
+    image: cloud-analytics-spark:3.5.9
+    init: true
+    depends_on:
+      cassandra-init:
+        condition: service_completed_successfully
+    environment:
+      PIPELINE_PROFILE: local
+      # La config local lee el host de acá; desde un venv en el host vale localhost (D17).
+      CASSANDRA_HOST: cassandra
+      CASSANDRA_PORT: "9042"
+    volumes:
+      - .:/workspace
+    ports:
+      - "127.0.0.1:8888:8888"   # JupyterLab
+      - "127.0.0.1:4040:4040"   # Spark UI
+
+volumes:
+  cassandra_data:

@@ -55,6 +55,23 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
 
 ---
 
+## Entorno de ejecución
+
+Solo hace falta **Docker Desktop**: Python 3.11, Java 17, PySpark 3.5.9 y Cassandra 4.1 vienen en
+contenedores (D17).
+
+```bash
+git clone <url-del-repo>
+cd big-data
+make up      # o: docker compose up -d --build  → Jupyter en http://localhost:8888
+make check   # verifica versiones y la conexión Spark ↔ Cassandra
+```
+
+Todos los comandos, la alternativa sin Docker y la solución de problemas están en
+[`infra/README.md`](infra/README.md).
+
+---
+
 ## Reproducir el perfilado
 
 Requiere **Python 3.9 o superior**. En macOS conviene usar un entorno virtual: el Python del

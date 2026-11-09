@@ -1,5 +1,6 @@
 # Configuración con credenciales
 config/pipeline.local.yaml
+config/pipeline.cloud.yaml
 .env
 secure-connect-*.zip
 *.pem
@@ -12,6 +13,8 @@ data/datalake/gold/
 data/datalake/quarantine/
 data/datalake/_checkpoints/
 data/datalake/_metadata/
+# Lake de fixtures de calidad y late data (D20)
+data/sandbox/
 *.parquet
 _SUCCESS
 

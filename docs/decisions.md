@@ -1,6 +1,6 @@
 # DECISIONS
 
-**Cloud Provider Analytics · ITBA Big Data 2C 2026** · v1.3 (D13–D20, segunda entrega)
+**Cloud Provider Analytics · ITBA Big Data 2C 2026** · v1.4 (D13–D21, segunda entrega)
 
 > Cifras verificadas sobre el **dataset completo** (120 partes, 43.200 eventos). Fuente: `evidence/profiling_landing.md`.
 
@@ -411,6 +411,18 @@ Los fixtures son JSONL chicos versionados en `data/fixtures/`, fuera de Landing.
 Hay **un solo** evento con `event_id` nulo porque la deduplicación agrupa todos los nulos como una misma clave: con dos, uno se perdería en Bronze sin llegar a Quarantine. Verificado en `tests/test_stream_events.py`, que también confirma que el watermark se recupera del checkpoint entre corridas: un evento del 15/07 que llega en una corrida posterior entra, y uno del 15/06 se descarta. La regla `event_id_duplicate` de Silver no se puede alcanzar por el stream mientras el watermark retenga la clave, así que se prueba en pytest con un DataFrame armado a mano.
 
 **Evidencia:** las muestras de `data/sandbox/quarantine/` y las métricas del stream van a `evidence/entrega2/`. En el lake principal, que Quarantine esté vacía es el resultado esperado y se documenta así, porque coincide con las 0 violaciones del perfilado (O5). Se escribe igual y se lee con esquema explícito: sin archivos Parquet, Spark no puede inferirlo. `data/sandbox/` va a `.gitignore`.
+
+---
+
+## D21 · Features en una tabla Silver diaria; Gold solo publica
+
+`silver/usage_daily_features`, con grano `(org_id, usage_date, service)` y particionada por `usage_date`: `daily_cost_usd`, `requests`, `cpu_hours`, `storage_gb_hours`, `genai_tokens` y `carbon_kg`, más `events`, `value_null_events` y `cost_anomaly_events`.
+
+La consigna pide las features en Silver (§6.2). Si se calcularan de nuevo en Gold, la misma agregación viviría en dos lugares. Gold (`org_daily_usage_by_service`, Top-N y anomalías) lee esta tabla y agrega `processed_ts`, sin volver a agregar eventos.
+
+**Métricas de uso** (D19): valen 0 si el grupo no tuvo eventos de esa métrica, y null si los tuvo pero todos llegaron sin `value`. En `requests` son 68 grupos.
+
+**Medido:** 11.050 filas con 11.050 claves distintas (el grano de D8), costo total de 147.433,98 USD (igual a la suma de Landing), 0 huérfanos, 0 fechas sin balance (O4). `silver/usage_events` compacta Bronze: pasa de 1.440 archivos (18 MB) a 60 (3,5 MB).
 
 ---
 

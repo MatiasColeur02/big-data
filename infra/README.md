@@ -22,6 +22,7 @@ las zonas que genera el pipeline quedan en `data/datalake/` del repo (ignoradas 
 | Correr los tests | `make test` | `docker compose run --rm spark pytest` |
 | Cargar Bronze (maestros y stream de eventos) | `make bronze` | `docker compose run --rm spark python -m src.ingest.batch_masters` y luego `... -m src.ingest.stream_events` |
 | Calidad sobre Bronze y sandbox de fixtures (D20) | `make quality` | `docker compose run --rm spark python -m src.quality.events` y luego `... -m src.quality.sandbox` |
+| Silver (dims, calidad, eventos y features) | `make silver` | `docker compose run --rm spark python -m src.silver.run` |
 | Terminal en el contenedor de Spark | `make shell` | `docker compose run --rm spark bash` |
 | `cqlsh` contra Cassandra | `make cqlsh` | `docker compose exec cassandra cqlsh` |
 | Ver logs | `make logs` | `docker compose logs -f` |

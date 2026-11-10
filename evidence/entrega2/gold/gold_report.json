@@ -1,0 +1,28 @@
+{
+  "as_of_date": "2025-08-31",
+  "rows": {
+    "org_daily_usage_by_service": 11050,
+    "org_service_cost_14d": 262,
+    "cost_anomaly_mart": 11050
+  },
+  "files": {
+    "org_daily_usage_by_service": 60,
+    "org_service_cost_14d": 1,
+    "cost_anomaly_mart": 60
+  },
+  "anomalies": {
+    "evaluated": 11050,
+    "anomalies": 134,
+    "anomaly_rate_pct": 1.21,
+    "positive": 124,
+    "negative": 10,
+    "by_method": {
+      "mad": {
+        "groups_days": 11050,
+        "anomalies": 134
+      }
+    },
+    "groups": 262,
+    "groups_with_anomaly": 93
+  }
+}

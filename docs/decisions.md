@@ -143,7 +143,9 @@ Z-score modificado por grupo `(org_id, service)` sobre `daily_cost_usd`, umbral 
 
 La media es 3,4× la mediana y el salto de p99 a p99,9 es de 8×: distribución muy asimétrica. El z-score usa media y desvío, y ambos están contaminados por los mismos outliers que se busca detectar. Mediana y MAD son robustas por construcción.
 
-Por grupo porque 200 USD/día es normal para una enterprise en compute y anómalo para una free en analytics. **Si MAD = 0** (organización con poca actividad), se cae a percentil 99 del grupo y se registra el método usado.
+Por grupo porque 200 USD/día es normal para una enterprise en compute y anómalo para una free en analytics.
+
+**Medido (segunda entrega, `src/gold/anomalies.py`):** 134 anomalías en 11.050 días-servicio (1,21 %), 124 por encima de la mediana y 10 por debajo, en 93 de los 262 grupos. Ningún grupo tiene MAD = 0, así que el fallback a p99 no se activó con los datos reales; está cubierto por `tests/test_gold.py`. Detalle en `evidence/entrega2/gold/anomalies.md`. **Si MAD = 0** (organización con poca actividad), se cae a percentil 99 del grupo y se registra el método usado.
 
 ---
 

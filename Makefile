@@ -3,10 +3,10 @@ COMPOSE = docker compose
 RUN     = $(COMPOSE) run --rm spark
 
 .DEFAULT_GOAL := help
-.PHONY: help up down reset check test bronze quality silver gold shell cqlsh logs
+.PHONY: help up down reset check test pipeline clean bronze quality silver gold serving queries shell cqlsh logs
 
 help:  ## Lista los comandos
-	@grep -E '^[a-z]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-7s %s\n", $$1, $$2}'
+	@grep -E '^[a-z]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-9s %s\n", $$1, $$2}'
 
 up:  ## Construye la imagen, levanta Cassandra, aplica el esquema y abre Jupyter (localhost:8888)
 	$(COMPOSE) up -d --build
@@ -16,6 +16,12 @@ check:  ## Verifica versiones y escritura, lectura y TRUNCATE en Cassandra (B2, 
 
 test:  ## Corre pytest dentro del contenedor
 	$(RUN) pytest
+
+pipeline:  ## Corre el pipeline completo: Bronze → calidad → Silver → Gold → Serving (2.8)
+	$(RUN) python -m src.pipeline
+
+clean:  ## Borra juntas las zonas generadas del lake y los checkpoints (D13); Landing no se toca
+	$(RUN) python -m src.pipeline --clean-only
 
 bronze:  ## Corre Bronze: maestros batch y stream de eventos
 	$(RUN) python -m src.ingest.batch_masters
@@ -30,6 +36,15 @@ silver:  ## Corre Silver: dimensiones, calidad, eventos conformados y features d
 
 gold:  ## Corre Gold: mart diario, Top-N 14 días y anomalías MAD; evidencia en evidence/entrega2/gold
 	$(RUN) python -m src.gold.run
+
+serving:  ## Carga Gold en Cassandra (upsert + TRUNCATE del Top-N) y corre P1/P2; evidencia en evidence/entrega2/serving
+	$(RUN) python -m src.serving.load_cassandra
+
+queries:  ## Corre 03_queries.cql con cqlsh y con el driver; salida en evidence/entrega2/serving
+	@mkdir -p evidence/entrega2/serving
+	$(COMPOSE) run --rm --no-deps -T --entrypoint cqlsh cassandra-init cassandra 9042 -f /cql/03_queries.cql \
+		> evidence/entrega2/serving/cqlsh_queries.txt
+	$(RUN) python -m src.serving.queries
 
 shell:  ## Abre una terminal en el contenedor de Spark
 	$(RUN) bash

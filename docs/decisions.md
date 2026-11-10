@@ -277,6 +277,8 @@ La tabla suma `as_of_date` como columna regular, fuera de la clave, para que qui
 
 `org_daily_usage_by_service` no lo necesita: su clave `(org_id, usage_date, service)` no incluye métricas, así que la recarga es un upsert puro.
 
+**Nulls (implementación, 2.7):** la carga usa `spark.cassandra.output.ignoreNulls=true`. En Cassandra escribir un null es escribir un tombstone, y las métricas que no aplican (`genai_tokens` fuera de genai, `carbon_kg` en eventos v1) generaban ~1.000 tombstones por rango de token en cada recarga, con warnings de `tombstone_warn_threshold` al leer. El costo: si un reproceso cambiara una métrica de un valor a null, quedaría el valor anterior. Con Gold determinista no pasa, y si cambiara una regla de nulos (D19) se resuelve con un `TRUNCATE` de la tabla antes de recargar.
+
 ---
 
 ## D15 · Fecha de referencia `as_of_date` y fechas en **UTC**

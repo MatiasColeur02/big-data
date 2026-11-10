@@ -3,13 +3,16 @@ COMPOSE = docker compose
 RUN     = $(COMPOSE) run --rm spark
 
 .DEFAULT_GOAL := help
-.PHONY: help up down reset check check-astra test pipeline clean bronze quality silver gold serving queries shell cqlsh logs
+.PHONY: help up down reset check check-astra idempotency test pipeline clean bronze quality silver gold serving queries shell cqlsh logs
 
 help:  ## Lista los comandos
 	@grep -E '^[a-z]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-9s %s\n", $$1, $$2}'
 
 up:  ## Construye la imagen, levanta Cassandra, aplica el esquema y abre Jupyter (localhost:8888)
 	$(COMPOSE) up -d --build
+
+idempotency:  ## Prueba de idempotencia O6 (3 corridas) contra Cassandra local; PROFILE=cloud para AstraDB
+	$(RUN) python -m src.idempotency $(if $(PROFILE),--profile $(PROFILE),)
 
 check-astra:  ## Verifica escritura, lectura y TRUNCATE en AstraDB (perfil cloud, 2.9)
 	$(RUN) python infra/check_astra.py

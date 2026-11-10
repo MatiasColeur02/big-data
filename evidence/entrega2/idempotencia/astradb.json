@@ -1,0 +1,178 @@
+{
+  "Antes": {
+    "lake_rows": {
+      "bronze.billing_monthly": 240,
+      "bronze.customers_orgs": 80,
+      "bronze.marketing_touches": 1500,
+      "bronze.nps_surveys": 92,
+      "bronze.resources": 400,
+      "bronze.support_tickets": 1000,
+      "bronze.usage_events_stream": 43200,
+      "bronze.users": 800,
+      "quarantine.billing_monthly": 0,
+      "quarantine.customers_orgs": 0,
+      "quarantine.marketing_touches": 0,
+      "quarantine.nps_surveys": 0,
+      "quarantine.resources": 0,
+      "quarantine.support_tickets": 0,
+      "quarantine.usage_events_stream": 0,
+      "quarantine.users": 0,
+      "silver.dim_org": 80,
+      "silver.dim_resource": 400,
+      "silver.usage_daily_features": 11050,
+      "silver.usage_events": 43200,
+      "gold.cost_anomaly_mart": 11050,
+      "gold.org_daily_usage_by_service": 11050,
+      "gold.org_service_cost_14d": 262
+    },
+    "duplicates": {
+      "bronze.usage_events_stream": 0,
+      "silver.usage_events": 0,
+      "silver.usage_daily_features": 0,
+      "gold.org_daily_usage_by_service": 0,
+      "gold.org_service_cost_14d": 0
+    },
+    "serving": {
+      "org_daily_usage_by_service": {
+        "rows": 11050,
+        "sum_daily_cost_usd": 147433.9778
+      },
+      "org_service_cost_14d": {
+        "rows": 262,
+        "sum_total_cost_usd": 33998.5709
+      }
+    }
+  },
+  "Corrida 1 \u00b7 desde cero": {
+    "lake_rows": {
+      "bronze.billing_monthly": 240,
+      "bronze.customers_orgs": 80,
+      "bronze.marketing_touches": 1500,
+      "bronze.nps_surveys": 92,
+      "bronze.resources": 400,
+      "bronze.support_tickets": 1000,
+      "bronze.usage_events_stream": 43200,
+      "bronze.users": 800,
+      "quarantine.billing_monthly": 0,
+      "quarantine.customers_orgs": 0,
+      "quarantine.marketing_touches": 0,
+      "quarantine.nps_surveys": 0,
+      "quarantine.resources": 0,
+      "quarantine.support_tickets": 0,
+      "quarantine.usage_events_stream": 0,
+      "quarantine.users": 0,
+      "silver.dim_org": 80,
+      "silver.dim_resource": 400,
+      "silver.usage_daily_features": 11050,
+      "silver.usage_events": 43200,
+      "gold.cost_anomaly_mart": 11050,
+      "gold.org_daily_usage_by_service": 11050,
+      "gold.org_service_cost_14d": 262
+    },
+    "duplicates": {
+      "bronze.usage_events_stream": 0,
+      "silver.usage_events": 0,
+      "silver.usage_daily_features": 0,
+      "gold.org_daily_usage_by_service": 0,
+      "gold.org_service_cost_14d": 0
+    },
+    "serving": {
+      "org_daily_usage_by_service": {
+        "rows": 11050,
+        "sum_daily_cost_usd": 147433.9778
+      },
+      "org_service_cost_14d": {
+        "rows": 262,
+        "sum_total_cost_usd": 33998.5709
+      }
+    }
+  },
+  "Corrida 2 \u00b7 sin limpiar": {
+    "lake_rows": {
+      "bronze.billing_monthly": 240,
+      "bronze.customers_orgs": 80,
+      "bronze.marketing_touches": 1500,
+      "bronze.nps_surveys": 92,
+      "bronze.resources": 400,
+      "bronze.support_tickets": 1000,
+      "bronze.usage_events_stream": 43200,
+      "bronze.users": 800,
+      "quarantine.billing_monthly": 0,
+      "quarantine.customers_orgs": 0,
+      "quarantine.marketing_touches": 0,
+      "quarantine.nps_surveys": 0,
+      "quarantine.resources": 0,
+      "quarantine.support_tickets": 0,
+      "quarantine.usage_events_stream": 0,
+      "quarantine.users": 0,
+      "silver.dim_org": 80,
+      "silver.dim_resource": 400,
+      "silver.usage_daily_features": 11050,
+      "silver.usage_events": 43200,
+      "gold.cost_anomaly_mart": 11050,
+      "gold.org_daily_usage_by_service": 11050,
+      "gold.org_service_cost_14d": 262
+    },
+    "duplicates": {
+      "bronze.usage_events_stream": 0,
+      "silver.usage_events": 0,
+      "silver.usage_daily_features": 0,
+      "gold.org_daily_usage_by_service": 0,
+      "gold.org_service_cost_14d": 0
+    },
+    "serving": {
+      "org_daily_usage_by_service": {
+        "rows": 11050,
+        "sum_daily_cost_usd": 147433.9778
+      },
+      "org_service_cost_14d": {
+        "rows": 262,
+        "sum_total_cost_usd": 33998.5709
+      }
+    }
+  },
+  "Corrida 3 \u00b7 reproceso total": {
+    "lake_rows": {
+      "bronze.billing_monthly": 240,
+      "bronze.customers_orgs": 80,
+      "bronze.marketing_touches": 1500,
+      "bronze.nps_surveys": 92,
+      "bronze.resources": 400,
+      "bronze.support_tickets": 1000,
+      "bronze.usage_events_stream": 43200,
+      "bronze.users": 800,
+      "quarantine.billing_monthly": 0,
+      "quarantine.customers_orgs": 0,
+      "quarantine.marketing_touches": 0,
+      "quarantine.nps_surveys": 0,
+      "quarantine.resources": 0,
+      "quarantine.support_tickets": 0,
+      "quarantine.usage_events_stream": 0,
+      "quarantine.users": 0,
+      "silver.dim_org": 80,
+      "silver.dim_resource": 400,
+      "silver.usage_daily_features": 11050,
+      "silver.usage_events": 43200,
+      "gold.cost_anomaly_mart": 11050,
+      "gold.org_daily_usage_by_service": 11050,
+      "gold.org_service_cost_14d": 262
+    },
+    "duplicates": {
+      "bronze.usage_events_stream": 0,
+      "silver.usage_events": 0,
+      "silver.usage_daily_features": 0,
+      "gold.org_daily_usage_by_service": 0,
+      "gold.org_service_cost_14d": 0
+    },
+    "serving": {
+      "org_daily_usage_by_service": {
+        "rows": 11050,
+        "sum_daily_cost_usd": 147433.9778
+      },
+      "org_service_cost_14d": {
+        "rows": 262,
+        "sum_total_cost_usd": 33998.5709
+      }
+    }
+  }
+}

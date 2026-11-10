@@ -3,7 +3,7 @@ COMPOSE = docker compose
 RUN     = $(COMPOSE) run --rm spark
 
 .DEFAULT_GOAL := help
-.PHONY: help up down reset check test bronze shell cqlsh logs
+.PHONY: help up down reset check test bronze quality shell cqlsh logs
 
 help:  ## Lista los comandos
 	@grep -E '^[a-z]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-7s %s\n", $$1, $$2}'
@@ -20,6 +20,10 @@ test:  ## Corre pytest dentro del contenedor
 bronze:  ## Corre Bronze: maestros batch y stream de eventos
 	$(RUN) python -m src.ingest.batch_masters
 	$(RUN) python -m src.ingest.stream_events
+
+quality:  ## Reglas de calidad sobre Bronze y sandbox de fixtures (D20); evidencia en evidence/entrega2/
+	$(RUN) python -m src.quality.events
+	$(RUN) python -m src.quality.sandbox
 
 shell:  ## Abre una terminal en el contenedor de Spark
 	$(RUN) bash

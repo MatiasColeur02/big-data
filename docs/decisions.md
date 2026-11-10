@@ -300,6 +300,9 @@ Para que la ecuación cierre:
 - **Fecha nula:** si `event_ts` es nulo, `event_date` también lo es. El control trata el nulo como una fecha más (join null-safe con `<=>`) para no dejar esas filas fuera de la cuenta. Hoy el dataset no tiene timestamps nulos.
 - **Una sola regla por fila:** si un evento viola dos reglas `BLOQUEA`, entra a Quarantine una sola vez, con la primera en este orden: `event_id_null` → `event_id_duplicate` → `value_not_castable`.
 - **Duplicados:** de cada `event_id` repetido queda en Silver la fila con menor `ingest_ts`; las demás van a Quarantine.
+- **Reemplazo completo:** Silver recalcula las 60 fechas en cada corrida (43.200 filas, segundos), así que Quarantine de eventos se reescribe completa y no por partición. Con un overwrite dinámico por `dq_rule`, una regla que deja de tener rechazos conservaría filas viejas. El reproceso incremental por fecha queda para el backlog.
+
+Implementado en `src/quality/` (`rules.py`, `events.py`) y verificado en `tests/test_quality.py`: en el lake principal, 43.200 válidos, 0 en Quarantine y 0 fechas sin balance.
 
 ---
 

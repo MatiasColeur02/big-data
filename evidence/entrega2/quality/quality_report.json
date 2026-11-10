@@ -1,0 +1,17 @@
+{
+  "bronze": 43200,
+  "valid": 43200,
+  "quarantine": 0,
+  "blocked_by_rule": {
+    "event_id_null": 0,
+    "event_id_duplicate": 0,
+    "value_not_castable": 0
+  },
+  "flagged_by_rule": {
+    "cost_negative": 211,
+    "unit_imputed": 2038,
+    "value_null": 877
+  },
+  "cost_anomalies": 211,
+  "unbalanced_dates": []
+}

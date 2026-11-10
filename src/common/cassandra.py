@@ -34,8 +34,12 @@ def spark_conf(cfg: Config) -> dict[str, str]:
             "spark.cassandra.connection.host": host,
             "spark.cassandra.connection.port": str(port),
         }
+    # El connector no acepta una ruta local suelta: pide una URL o el nombre de un archivo
+    # distribuido con `spark.files`, así que se distribuye el bundle y se lo cita por su nombre.
+    bundle = _bundle(cfg)
     return {
-        "spark.cassandra.connection.config.cloud.path": _bundle(cfg),
+        "spark.files": bundle,
+        "spark.cassandra.connection.config.cloud.path": Path(bundle).name,
         "spark.cassandra.auth.username": "token",
         "spark.cassandra.auth.password": astra_token(cfg),
     }

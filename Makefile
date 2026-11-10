@@ -3,13 +3,16 @@ COMPOSE = docker compose
 RUN     = $(COMPOSE) run --rm spark
 
 .DEFAULT_GOAL := help
-.PHONY: help up down reset check test pipeline clean bronze quality silver gold serving queries shell cqlsh logs
+.PHONY: help up down reset check check-astra test pipeline clean bronze quality silver gold serving queries shell cqlsh logs
 
 help:  ## Lista los comandos
 	@grep -E '^[a-z]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-9s %s\n", $$1, $$2}'
 
 up:  ## Construye la imagen, levanta Cassandra, aplica el esquema y abre Jupyter (localhost:8888)
 	$(COMPOSE) up -d --build
+
+check-astra:  ## Verifica escritura, lectura y TRUNCATE en AstraDB (perfil cloud, 2.9)
+	$(RUN) python infra/check_astra.py
 
 check:  ## Verifica versiones y escritura, lectura y TRUNCATE en Cassandra (B2, B3)
 	$(RUN) python infra/check_env.py

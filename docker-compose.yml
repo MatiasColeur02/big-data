@@ -62,6 +62,10 @@ services:
       # La config local lee el host de acá; desde un venv en el host vale localhost (D17).
       CASSANDRA_HOST: cassandra
       CASSANDRA_PORT: "9042"
+      # Solo para el perfil cloud (AstraDB). Compose la toma del .env de la raíz (no versionado);
+      # sin .env queda vacía y el perfil local no la usa.
+      ASTRA_DB_TOKEN: ${ASTRA_DB_TOKEN:-}
+      ASTRA_BUNDLE_PATH: ${ASTRA_BUNDLE_PATH:-/workspace/secure-connect-cloud-analytics.zip}
     volumes:
       - .:/workspace
     ports:

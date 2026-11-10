@@ -2,10 +2,11 @@
 #   cp config/pipeline.cloud.example.yaml config/pipeline.cloud.yaml   (en .gitignore)
 # y definir la variable de entorno ASTRA_DB_TOKEN antes de correr. El token nunca va en este archivo.
 
-datalake:
-  root: "/content/datalake"   # disco de la sesión (inclinación de D17; se confirma en la fase 2)
+# El lake queda en data/datalake/ del repo clonado (disco de la sesión de Colab): ahí viene Landing,
+# que está versionado. Se pierde al reciclarse la sesión; alternativa en Drive: pisar datalake.root.
 
 serving:
   provider: "astradb"
   astradb:
-    secure_connect_bundle: "/content/secure-connect-cloud-analytics.zip"
+    # Colab: subir el .zip a /content. Docker: docker-compose.yml define ASTRA_BUNDLE_PATH.
+    secure_connect_bundle: "${ASTRA_BUNDLE_PATH:-/content/secure-connect-cloud-analytics.zip}"

@@ -127,7 +127,9 @@ def test_opciones_de_conexion_por_provider(config_dir, monkeypatch, tmp_path):
         cassandra.spark_conf(astra)
     monkeypatch.setenv("TEST_ASTRA_TOKEN", "AstraCS:secreto")
     conf = cassandra.spark_conf(astra)
-    assert conf["spark.cassandra.connection.config.cloud.path"] == str(bundle)
+    # El connector no acepta una ruta local: el bundle se distribuye con spark.files y se cita por nombre.
+    assert conf["spark.files"] == str(bundle)
+    assert conf["spark.cassandra.connection.config.cloud.path"] == "bundle.zip"
     assert conf["spark.cassandra.auth.password"] == "AstraCS:secreto"
 
 
@@ -139,4 +141,5 @@ def test_configs_reales_cargan():
     assert local.get("streaming.source_path") == local.zone("landing") + "/usage_events_stream"
     cloud = load_config("cloud")
     assert cloud.get("serving.provider") == "astradb"
-    assert cloud.zone("bronze") == "/content/datalake/bronze"
+    # D22: el lake de Colab es data/datalake/ del repo clonado, igual que en local.
+    assert cloud.zone("bronze") == local.zone("bronze")

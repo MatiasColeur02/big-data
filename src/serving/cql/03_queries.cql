@@ -1,7 +1,7 @@
 -- Consultas mínimas de la segunda entrega (consigna §6.2, §7.4), sobre las tablas de 02_tables.cql.
 -- Cada consulta toca una sola partición (org_id) y no usa ALLOW FILTERING (D8).
 --   make queries                              cqlsh en Docker → evidence/entrega2/serving/cqlsh_queries.txt
---   python -m src.serving.queries             cualquier perfil → evidence/entrega2/serving/queries.md
+--   python -m src.serving.queries             cualquier perfil → evidence/entrega2/serving/queries_<provider>.md
 -- Valores de ejemplo del dataset provisto: org_53lc58dr usa los 6 servicios y es la de mayor costo
 -- entre las que los usan todos; as_of_date = 2025-08-31 (D15).
 USE cloud_analytics;

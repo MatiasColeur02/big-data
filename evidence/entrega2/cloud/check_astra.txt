@@ -1,0 +1,7 @@
+AstraDB
+  OK     config cloud: bundle encontrado y token definido
+  OK     cassandra-driver conectado a AstraDB, keyspace `cloud_analytics` presente
+  OK     SparkSession con el connector y el bundle
+  OK     connector: 2 escrituras de 3 filas, 3 leídas (upsert por clave primaria)
+  OK     cassandra-driver: TRUNCATE deja la tabla vacía (D14)
+AstraDB listo.

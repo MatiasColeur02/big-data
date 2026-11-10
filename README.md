@@ -72,6 +72,37 @@ Todos los comandos, la alternativa sin Docker y la solución de problemas están
 
 ---
 
+## Perfil cloud: Colab + AstraDB
+
+El mismo código corre contra **AstraDB** cambiando solo la config (D17, D22). Necesita una base
+Astra con el keyspace `cloud_analytics` (se crea desde la consola de Astra, no por CQL), un token
+`AstraCS:...` y el secure connect bundle (`.zip`). **Ni el token ni el bundle van al repo.**
+
+**En Google Colab**
+
+1. Abrir `notebooks/02_pipeline.ipynb` en Colab (*File → Open notebook → GitHub*).
+2. En el panel de Secrets (ícono de llave), crear `ASTRA_DB_TOKEN` con el token y activar
+   *Notebook access*. Si no está, la celda lo pide por prompt sin mostrarlo.
+3. Correr la celda **Setup de Colab**: pide el bundle (se guarda en `/content`, fuera del repo),
+   instala Java 17 y las dependencias fijadas, clona el repo y deja `PIPELINE_PROFILE=cloud`.
+4. *Runtime → Run all*. El lake queda en el disco de la sesión y se regenera desde Landing (D22).
+5. Antes de commitear una copia del notebook: *Edit → Clear all outputs* (`tests/test_notebooks.py`
+   falla si quedan salidas).
+
+**Desde Docker, sin Colab**
+
+```bash
+cp .env.example .env                       # completar ASTRA_DB_TOKEN
+cp ~/Downloads/secure-connect-*.zip secure-connect-cloud-analytics.zip   # raíz del repo, ignorado
+make check-astra                           # escritura, lectura, upsert y TRUNCATE en Astra
+make pipeline PROFILE=cloud                # pipeline completo con serving en Astra
+make idempotency PROFILE=cloud             # prueba O6 → evidence/entrega2/idempotencia/astradb.md
+```
+
+Evidencia del perfil cloud: [`evidence/entrega2/cloud/`](evidence/entrega2/cloud/).
+
+---
+
 ## Reproducir el perfilado
 
 Requiere **Python 3.9 o superior**. En macOS conviene usar un entorno virtual: el Python del

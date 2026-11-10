@@ -28,6 +28,9 @@ las zonas que genera el pipeline quedan en `data/datalake/` del repo (ignoradas 
 | Gold (mart diario, Top-N y anomalías) | `make gold` | `docker compose run --rm spark python -m src.gold.run` |
 | Serving: Gold → Cassandra (upsert + `TRUNCATE` del Top-N) y consultas P1/P2 | `make serving` | `docker compose run --rm spark python -m src.serving.load_cassandra` |
 | Consultas P1/P2 con `cqlsh` y con el driver → `evidence/entrega2/serving/` | `make queries` | `docker compose run --rm --no-deps -T --entrypoint cqlsh cassandra-init cassandra 9042 -f /cql/03_queries.cql` |
+| Verificar AstraDB: escritura, lectura, upsert y `TRUNCATE` → `evidence/entrega2/cloud/check_astra.txt` | `make check-astra` | `docker compose run --rm spark python infra/check_astra.py` |
+| Cualquier regla contra AstraDB (perfil cloud, D17) | `make <regla> PROFILE=cloud` | `docker compose run --rm -e PIPELINE_PROFILE=cloud spark <comando>` |
+| Prueba de idempotencia O6 (3 corridas) → `evidence/entrega2/idempotencia/` | `make idempotency` | `docker compose run --rm spark python -m src.idempotency` |
 | Terminal en el contenedor de Spark | `make shell` | `docker compose run --rm spark bash` |
 | `cqlsh` contra Cassandra | `make cqlsh` | `docker compose exec cassandra cqlsh` |
 | Ver logs | `make logs` | `docker compose logs -f` |
@@ -61,6 +64,9 @@ Entorno listo.
 | `apt-get` falla con `At least one invalid signature was encountered` al construir | El disco virtual de Docker Desktop está lleno | `docker system df` y liberar espacio (`docker builder prune`, `docker image prune`) o agrandar el disco en Settings → Resources |
 | `cassandra` no queda healthy o se reinicia | Poca memoria para Docker (usa ~1,8 GB) | Darle al menos 4 GB a Docker Desktop |
 | `port is already allocated` en 8888, 4040 o 9042 | Otro Jupyter, Spark o Cassandra corriendo en el host | Cerrarlo o cambiar el puerto del lado izquierdo en `docker-compose.yml` |
+| `falta la variable de entorno ASTRA_DB_TOKEN` | No hay `.env` o está vacío | `cp .env.example .env` y completar el token |
+| `no existe el secure connect bundle` | El `.zip` no está en la raíz del repo con ese nombre | Copiarlo como `secure-connect-cloud-analytics.zip` o definir `ASTRA_BUNDLE_PATH` en `.env` (ruta dentro del contenedor, `/workspace/...`) |
+| `no hay conexión con AstraDB` | Base hibernada por inactividad o token vencido | Reactivar la base desde la consola de Astra (tarda ~1 minuto) o generar otro token |
 | `no hay conexión con Cassandra` en `make check` | Cassandra todavía arrancando | Esperar a que `docker compose ps` la muestre `healthy` |
 
 ## Sin Docker (venv)

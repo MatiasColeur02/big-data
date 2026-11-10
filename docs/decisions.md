@@ -1,6 +1,6 @@
 # DECISIONS
 
-**Cloud Provider Analytics · ITBA Big Data 2C 2026** · v1.4 (D13–D21, segunda entrega)
+**Cloud Provider Analytics · ITBA Big Data 2C 2026** · v1.5 (D13–D22, segunda entrega)
 
 > Cifras verificadas sobre el **dataset completo** (120 partes, 43.200 eventos). Fuente: `evidence/profiling_landing.md`.
 
@@ -315,7 +315,7 @@ Implementado en `src/quality/` (`rules.py`, `events.py`) y verificado en `tests/
 | | Local · fase 1, principal | Cloud · fase 2 |
 |---|---|---|
 | Ejecución | Docker Compose (`docker-compose.yml`): contenedor `spark` con Python 3.11, Java 17 y PySpark 3.5.9 en `local[*]`. Alternativa: venv propio con esas versiones | Notebook en Colab |
-| Data Lake | `data/datalake/` en el repo, montado en el contenedor (las zonas generadas ya están en `.gitignore`) | Se decide en la fase 2, ver abajo |
+| Data Lake | `data/datalake/` en el repo, montado en el contenedor (las zonas generadas ya están en `.gitignore`) | Disco de la sesión de Colab (D22) |
 | Serving | Cassandra 4.1.12 en el mismo Compose | AstraDB |
 | Config | `config/pipeline.local.yaml` | `config/pipeline.cloud.yaml` |
 
@@ -341,7 +341,7 @@ Implementado en `src/quality/` (`rules.py`, `events.py`) y verificado en `tests/
 6. **Una base y dos perfiles versionados:** `pipeline.base.yaml` tiene todo lo común y `pipeline.local.example.yaml` / `pipeline.cloud.example.yaml` solo lo que cambia, para que los perfiles no se desincronicen. Reemplazan a `pipeline.example.yaml`. Si existe una copia sin `.example` (en `.gitignore`), tiene prioridad; si no, se usa la plantilla, así el perfil local corre sin copiar nada. El cargador rechaza cualquier clave `token`, `password` o `secret` con un valor escrito.
 7. **Keyspace:** en Docker lo crea `cql/01_keyspace.cql`; en Astra se crea desde la consola, porque Astra no permite `CREATE KEYSPACE` por CQL. `cql/02_tables.cql` es el mismo en los dos.
 
-**Data Lake en Colab** (se cierra en la fase 2). La inclinación es el disco de la sesión. D2 elegía Drive para no perder Bronze ni los checkpoints entre sesiones, pero la demostración de idempotencia son dos corridas seguidas en la misma sesión y el lake se regenera desde Landing en minutos. Drive montado no garantiza renames atómicos, y el checkpoint y `_spark_metadata/` dependen de ellos para confirmar cada lote.
+**Data Lake en Colab:** cerrada en D22 (disco de la sesión). D2 elegía Drive para no perder Bronze ni los checkpoints entre sesiones, pero la demostración de idempotencia son dos corridas seguidas en la misma sesión y el lake se regenera desde Landing en minutos. Drive montado no garantiza renames atómicos, y el checkpoint y `_spark_metadata/` dependen de ellos para confirmar cada lote.
 
 ---
 
@@ -430,6 +430,50 @@ La consigna pide las features en Silver (§6.2). Si se calcularan de nuevo en Go
 
 ---
 
+## D22 · Perfil cloud: lake en el **disco de la sesión de Colab**, serving en AstraDB
+
+Cierra la fase 2 de D17. El perfil `cloud` (`config/pipeline.cloud.example.yaml`) solo cambia
+`serving.provider: astradb` y la ruta del secure connect bundle: el lake queda en `data/datalake/`
+del repo clonado en `/content/big-data`, con Landing incluido porque está versionado.
+
+| Opción | A favor | En contra |
+|---|---|---|
+| **Disco de la sesión** | Renames atómicos (POSIX local): el checkpoint y `_spark_metadata/` funcionan igual que en Docker. Rápido. Sin montar nada | Se pierde al reciclarse la sesión |
+| Drive montado | Persiste entre sesiones | FUSE sin renames atómicos: un lote puede quedar confirmado a medias sin error (D13). Lento con 1.440 archivos chicos en Bronze |
+
+Perder el lake no cuesta nada: se regenera desde Landing con una corrida, y la evidencia que importa
+(registro de corridas, conteos, idempotencia) se exporta a `evidence/`. Lo que tiene que sobrevivir
+a la sesión está en AstraDB, no en el lake. Para llevar el lake a Drive igual, se pisa
+`datalake.root` en `config/pipeline.cloud.yaml` sin tocar código.
+
+**Credenciales** (D17, regla 5): el token entra por el panel de Secrets de Colab (`ASTRA_DB_TOKEN`)
+o por `getpass`, y el bundle se sube a `/content`, fuera del clon. Ninguno de los dos queda en el
+notebook ni en el repo. Localmente, el mismo perfil corre en Docker con `make <regla> PROFILE=cloud`,
+que toma el token del `.env` y el bundle de la raíz del repo (los dos en `.gitignore`).
+
+**Python de Colab:** Colab trae Python 3.12+, fuera del soporte oficial de PySpark 3.5 (3.8–3.11).
+Se validó en un contenedor que emula el runtime (Python 3.12, numpy 2, pandas 2.3, Java 17 por `apt`
+y solo los tres paquetes que fija la celda de setup). Apareció un problema: PySpark 3.5 importa
+`distutils` en `toPandas()`, y Python 3.12 ya no lo trae. `setuptools` provee el módulo, así que la
+celda de setup lo instala cuando el Python es 3.12 o mayor. Java 17 se instala con `apt` porque
+PySpark 3.5 no soporta Java 21.
+
+**Medido:**
+
+| Prueba | Resultado | Evidencia |
+|---|---|---|
+| B3 en Astra: escritura y lectura con el connector, upsert sin duplicar, `TRUNCATE` con el driver | OK | `evidence/entrega2/cloud/check_astra.txt` |
+| Carga de Gold en Astra | 11.050 y 262 filas, igual a Gold | `evidence/entrega2/serving/queries_astradb.md` |
+| P1 y P2 en Astra | Mismas filas y valores que en Cassandra local | `queries_astradb.md` vs `queries_cassandra.md` |
+| Idempotencia (O6) con serving en Astra, tres corridas | Conteos y sumas idénticos, 0 duplicados | `evidence/entrega2/idempotencia/astradb.md` |
+| `02_pipeline.ipynb` en el emulador de Colab (`make colab-emu`), desde cero contra Astra | 6 etapas OK en ~1 min (más la descarga del connector la primera vez) | `evidence/entrega2/cloud/runs_colab_emulado.jsonl` |
+
+**Pendiente:** la corrida en Colab real y las capturas de P1/P2 desde la consola de Astra
+(`evidence/entrega2/cloud/README.md`). El emulador no cubre el panel de Secrets, la subida del
+bundle ni el `git clone`.
+
+---
+
 ## Hallazgos del perfilado
 
 47.312 filas, 12,6 MB, 60 días (03/07 → 31/08/2025). Detalle completo en `evidence/profiling_landing.md`.
@@ -452,7 +496,6 @@ Decisiones no tomadas a la fecha, con su fecha límite y la opción preferida.
 
 | Pregunta | Se decide antes de | Inclinación |
 |---|---|---|
-| ¿Data Lake de Colab en el disco de la sesión o en Drive? | Fase 2 | Disco de la sesión (D17) |
 | ¿Herramienta de visualización? | 07/12 | Notebook con matplotlib |
 | ¿Airflow o notebook secuencial? | 07/12 | Secuencial: Airflow en Colab es overhead sin beneficio |
 
@@ -460,6 +503,7 @@ Decisiones no tomadas a la fecha, con su fecha límite y la opción preferida.
 
 | Pregunta | Decisión |
 |---|---|
+| ¿Data Lake de Colab en el disco de la sesión o en Drive? | Disco de la sesión (D22) |
 | ¿AstraDB o Cassandra en Docker? | Las dos, en fases: Cassandra en Docker para el perfil local y AstraDB para el perfil cloud (D17) |
 | ¿El componente de ML es anomalías o churn? | Anomalías con MAD (D9): reutiliza el análisis del perfilado y alimenta `cost_anomaly_mart`, que es un mart que la consigna ya pide |
 | ¿SCD tipo 2 en `dim_org`? | No. `customers_orgs.csv` es una sola foto, sin historia de cambios de plan: `dim_org` es SCD tipo 1 y se reemplaza en cada carga |

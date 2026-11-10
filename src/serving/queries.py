@@ -4,7 +4,9 @@
     python -m src.serving.queries --profile cloud    # AstraDB
 
 Ejecuta cada sentencia de `cql/03_queries.cql` con cassandra-driver y escribe
-`evidence/entrega2/serving/queries.md` con el CQL, la justificación query-first y el resultado.
+`evidence/entrega2/serving/queries_<provider>.md` (`queries_cassandra.md` o `queries_astradb.md`)
+con el CQL, la justificación query-first y el resultado. Un archivo por provider: correr un perfil
+no pisa la evidencia del otro.
 Usa los mismos archivos que `cqlsh -f` (`make queries`), así la evidencia vale para los dos perfiles.
 """
 
@@ -50,6 +52,10 @@ def execute(session, cfg: Config) -> list[dict]:
     return results
 
 
+def evidence_name(cfg: Config) -> str:
+    return f"queries_{cassandra.provider(cfg)}.md"
+
+
 def export(results: list[dict], cfg: Config, out_dir: Path) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -66,7 +72,7 @@ def export(results: list[dict], cfg: Config, out_dir: Path) -> Path:
             lines += [f"**Query-first:** {QUERY_FIRST[r['id']]}", ""]
         lines += ["```sql", r["cql"] + ";", "```", "", f"**Resultado:** {r['rows']} fila(s)", ""]
         lines.append(r["frame"].to_markdown(index=False) if r["rows"] else "_Sin filas._")
-    path = out_dir / "queries.md"
+    path = out_dir / evidence_name(cfg)
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 

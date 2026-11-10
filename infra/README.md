@@ -20,6 +20,7 @@ las zonas que genera el pipeline quedan en `data/datalake/` del repo (ignoradas 
 | Levantar todo y abrir Jupyter en <http://localhost:8888> | `make up` | `docker compose up -d --build` |
 | Verificar el entorno | `make check` | `docker compose run --rm spark python infra/check_env.py` |
 | Correr los tests | `make test` | `docker compose run --rm spark pytest` |
+| Cargar Bronze (maestros y stream de eventos) | `make bronze` | `docker compose run --rm spark python -m src.ingest.batch_masters` y luego `... -m src.ingest.stream_events` |
 | Terminal en el contenedor de Spark | `make shell` | `docker compose run --rm spark bash` |
 | `cqlsh` contra Cassandra | `make cqlsh` | `docker compose exec cassandra cqlsh` |
 | Ver logs | `make logs` | `docker compose logs -f` |

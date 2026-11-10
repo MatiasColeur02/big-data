@@ -1,0 +1,11 @@
+# Perfil cloud (D17, fase 2): notebook en Colab + AstraDB.
+#   cp config/pipeline.cloud.example.yaml config/pipeline.cloud.yaml   (en .gitignore)
+# y definir la variable de entorno ASTRA_DB_TOKEN antes de correr. El token nunca va en este archivo.
+
+datalake:
+  root: "/content/datalake"   # disco de la sesión (inclinación de D17; se confirma en la fase 2)
+
+serving:
+  provider: "astradb"
+  astradb:
+    secure_connect_bundle: "/content/secure-connect-cloud-analytics.zip"

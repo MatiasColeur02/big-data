@@ -1,0 +1,6 @@
+# Perfil local (D17): Docker Compose o venv, con Cassandra en Docker.
+# Funciona tal cual. Para cambiar algo: cp config/pipeline.local.example.yaml config/pipeline.local.yaml
+# (la copia está en .gitignore y tiene prioridad sobre este archivo).
+
+serving:
+  provider: "cassandra"

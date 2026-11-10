@@ -331,7 +331,7 @@ Para que la ecuación cierre:
 
 4. **La lógica vive en `src/`:** el notebook solo importa y llama, nunca define transformaciones.
 5. **Credenciales solo por variables de entorno** (`ASTRA_DB_TOKEN`). El YAML guarda la ruta del bundle, nunca el token. Si la variable falta, el pipeline falla con un mensaje claro antes de crear la sesión de Spark.
-6. **Dos plantillas versionadas,** `pipeline.local.example.yaml` y `pipeline.cloud.example.yaml`, que reemplazan a `pipeline.example.yaml`. Las copias sin `.example` van a `.gitignore`; hoy solo está la local.
+6. **Una base y dos perfiles versionados:** `pipeline.base.yaml` tiene todo lo común y `pipeline.local.example.yaml` / `pipeline.cloud.example.yaml` solo lo que cambia, para que los perfiles no se desincronicen. Reemplazan a `pipeline.example.yaml`. Si existe una copia sin `.example` (en `.gitignore`), tiene prioridad; si no, se usa la plantilla, así el perfil local corre sin copiar nada. El cargador rechaza cualquier clave `token`, `password` o `secret` con un valor escrito.
 7. **Keyspace:** en Docker lo crea `cql/01_keyspace.cql`; en Astra se crea desde la consola, porque Astra no permite `CREATE KEYSPACE` por CQL. `cql/02_tables.cql` es el mismo en los dos.
 
 **Data Lake en Colab** (se cierra en la fase 2). La inclinación es el disco de la sesión. D2 elegía Drive para no perder Bronze ni los checkpoints entre sesiones, pero la demostración de idempotencia son dos corridas seguidas en la misma sesión y el lake se regenera desde Landing en minutos. Drive montado no garantiza renames atómicos, y el checkpoint y `_spark_metadata/` dependen de ellos para confirmar cada lote.
@@ -351,6 +351,8 @@ El pipeline usa `trigger(availableNow=True)` + `awaitTermination()`: procesa tod
 Mantener los micro-lotes importa: así el watermark avanza entre lotes y aparece late data para medir (D6, D20).
 
 `processingTime="10 seconds"` queda para la demo de near real-time (O7): se corre contra el sandbox de D20, se agrega un archivo y se muestra que aparece en Bronze en el micro-lote siguiente.
+
+**Medido:** la corrida completa procesa 24 lotes con datos en 13 s, y la re-ejecución no lee nada en 4 s. Como la consulta tiene estado, Spark agrega al final un lote **sin datos** que solo avanza el watermark: no se cuenta como lote.
 
 **Métricas:** se leen de `query.recentProgress`, que tiene todos los lotes, y no de `lastProgress`, que solo tiene el último. Se suman `numInputRows`, `stateOperators[].numRowsDroppedByWatermark` y `stateOperators[].customMetrics.numDroppedDuplicateRows`, y el total va al registro de corridas (D11). `recentProgress` guarda 100 lotes por defecto (`spark.sql.streaming.numRecentProgressUpdates`), más que los 24 de una corrida.
 
@@ -403,7 +405,7 @@ Los fixtures son JSONL chicos versionados en `data/fixtures/`, fuera de Landing.
 | Evento del 15/07 en el lote tardío | Bronze: dentro del watermark | Entra (late data aceptada) |
 | Evento del 15/06 en el lote tardío | Bronze: fuera del watermark | `numRowsDroppedByWatermark` = 1 |
 
-Hay **un solo** evento con `event_id` nulo porque la deduplicación agrupa todos los nulos como una misma clave: con dos, uno se perdería en Bronze sin llegar a Quarantine. Se verifica en los tests. La regla `event_id_duplicate` de Silver no se puede alcanzar por el stream mientras el watermark retenga la clave, así que se prueba en pytest con un DataFrame armado a mano.
+Hay **un solo** evento con `event_id` nulo porque la deduplicación agrupa todos los nulos como una misma clave: con dos, uno se perdería en Bronze sin llegar a Quarantine. Verificado en `tests/test_stream_events.py`, que también confirma que el watermark se recupera del checkpoint entre corridas: un evento del 15/07 que llega en una corrida posterior entra, y uno del 15/06 se descarta. La regla `event_id_duplicate` de Silver no se puede alcanzar por el stream mientras el watermark retenga la clave, así que se prueba en pytest con un DataFrame armado a mano.
 
 **Evidencia:** las muestras de `data/sandbox/quarantine/` y las métricas del stream van a `evidence/entrega2/`. En el lake principal, que Quarantine esté vacía es el resultado esperado y se documenta así, porque coincide con las 0 violaciones del perfilado (O5). Se escribe igual y se lee con esquema explícito: sin archivos Parquet, Spark no puede inferirlo. `data/sandbox/` va a `.gitignore`.
 
@@ -416,6 +418,8 @@ Hay **un solo** evento con `event_id` nulo porque la deduplicación agrupa todos
 **Lo que está bien:** integridad referencial perfecta (cero huérfanos en las 6 fuentes que referencian organizaciones, los 400 `resource_id` existen). Cero duplicados de PK. Cero fechas inválidas. Dominios ya conformados: no hay variantes tipo `us_east` / `US-East`. Ningún evento tiene `service` o `region` distintos de los de su recurso.
 
 En consecuencia, el join con `dim_resource` **no** es necesario para conformar; se realiza igualmente como control de calidad y para traer `state` y `tags_json`.
+
+**Encontrado al implementar Bronze (segunda entrega):** `resources.csv` escapa las comillas como `""` (RFC 4180), mientras que Spark espera `\` por defecto. Afecta a los 317 `tags_json` no nulos, y en 211 (los que tienen varias etiquetas) la fila se corre de columna. Con el modo por defecto (`PERMISSIVE`) habría pasado sin aviso. Los maestros se leen con `escape='"'`, en modo `FAILFAST` y validando la cabecera contra el esquema (`enforceSchema=false`), así que un problema como este hace fallar el job en lugar de corromper Bronze.
 
 **Lo que está roto:** ver D7. Más `credits` nulo en billing (57 %, se interpreta como 0), `resolved_at` nulo en tickets (24 %, son tickets abiertos, no un defecto) y `last_login` nulo en users (17 %).
 

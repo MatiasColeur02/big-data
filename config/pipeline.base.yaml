@@ -1,0 +1,62 @@
+# Configuración común a todos los perfiles. Versionada, sin credenciales.
+# El perfil (pipeline.<perfil>.yaml) se combina encima y pisa solo lo que define (D17).
+#
+# Interpolación:
+#   ${seccion.clave}       otro valor de esta config
+#   ${VARIABLE}            variable de entorno obligatoria
+#   ${VARIABLE:-defecto}   variable de entorno con valor por defecto
+# Las rutas relativas se resuelven contra la raíz del repo, no contra el directorio de trabajo.
+
+datalake:
+  root: "data/datalake"
+  zones:
+    landing:     "${datalake.root}/landing"
+    bronze:      "${datalake.root}/bronze"
+    silver:      "${datalake.root}/silver"
+    gold:        "${datalake.root}/gold"
+    quarantine:  "${datalake.root}/quarantine"
+    checkpoints: "${datalake.root}/_checkpoints"   # D10: estado del motor, fuera de las zonas
+    metadata:    "${datalake.root}/_metadata"      # D11: registro de corridas
+
+spark:
+  app_name: "cloud_provider_analytics"
+  master: "local[*]"
+  packages: "${SPARK_CASSANDRA_PACKAGE:-com.datastax.spark:spark-cassandra-connector_2.12:3.5.1}"
+  conf:
+    spark.sql.session.timeZone: "UTC"                 # D15
+    spark.sql.sources.partitionOverwriteMode: "dynamic"   # D10, solo Silver y Gold (D13)
+    spark.sql.shuffle.partitions: "8"                 # D13: fijo desde la primera corrida del stream
+    spark.driver.memory: "2g"
+    spark.ui.showConsoleProgress: "false"
+
+streaming:
+  source_path: "${datalake.zones.landing}/usage_events_stream"
+  max_files_per_trigger: 5
+  watermark: "60 days"                 # D6
+  dedup_key: "event_id"
+  demo_trigger_interval: "10 seconds"  # D18: solo para la demo de near real-time (O7)
+
+quality:
+  cost_increment_min: -0.01
+  csat_valid_range: [1, 5]
+  nps_valid_range: [-100, 100]
+  force_usd_fx_to_one: true
+
+analysis:
+  as_of_date: null    # D15: null = max(event_date) de Silver
+
+anomaly:
+  method: "mad"
+  modified_zscore_threshold: 3.5
+  group_by: ["org_id", "service"]
+  fallback_when_mad_zero: "percentile_99"
+
+serving:
+  provider: "cassandra"     # cassandra | astradb (D17)
+  keyspace: "cloud_analytics"
+  cassandra:
+    host: "${CASSANDRA_HOST:-localhost}"   # Compose define CASSANDRA_HOST=cassandra
+    port: "${CASSANDRA_PORT:-9042}"
+  astradb:
+    secure_connect_bundle: null   # ruta al .zip, fuera del repo
+    token_env: "ASTRA_DB_TOKEN"   # nombre de la variable de entorno; el token nunca va en el YAML

@@ -4,11 +4,12 @@ Proyecto Integrador · **Big Data · ITBA · 2C 2026** · Prof. Diego Mosquera
 
 Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Producto sobre datos de un proveedor de nube. PySpark + Structured Streaming + Parquet + Cassandra/AstraDB.
 
-| | |
-|---|---|
-| Entrega actual | **Primera entrega · 05/10/2026** (postergada desde el 28/09) — diseño y fundación de datos |
-| Estado | Diseño. Todavía no hay pipeline ejecutable (es el alcance de la entrega 2) |
-| Equipo | Valentina Marti Reta · Nicanor Porto · Matías Coleur · Federico Etchegorry · Julieta Techenski |
+|                     |                                                                                                                                                                                      |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Entrega actual      | **Segunda entrega · 16/11/2026** · implementación técnica                                                                                                                            |
+| Estado              | Pipeline ejecutable de punta a punta: Landing → Bronze → Silver → Gold → Cassandra/AstraDB, con P1 y P2 respondidas. Detalle en [`docs/estado_entrega2.md`](docs/estado_entrega2.md) |
+| Entregas anteriores | Primera · 05/10/2026 · diseño (tag `v1.0-entrega1`, nota 9/10)                                                                                                                       |
+| Equipo              | Valentina Marti Reta · Nicanor Porto · Matías Coleur · Federico Etchegorry · Julieta Techenski                                                                                       |
 ---
 
 ## Estructura
@@ -19,26 +20,31 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
 ├── config/                   ← configuración externalizada, sin credenciales
 ├── data/                     ← dataset provisto por la cátedra (landing)
 ├── docs/                     ← todo el material de la entrega
-│   ├── estado_entrega1.md    ← trazabilidad consigna → archivos
-│   ├── decisions.md
-│   ├── arquitectura_v1.svg / .png
-│   ├── diseno_v1.md / .pdf
+│   ├── estado_entrega2.md    ← trazabilidad consigna → archivos
+│   ├── arquitectura_v2.svg / .png  ← lo implementado
+│   ├── decisions.md          ← D1–D22
+│   ├── gobierno.md           ← controles, metadatos, linaje, acceso, observabilidad
+│   ├── plan_correcciones.md  ← feedback de la 1.ª entrega → cambios
+│   ├── backlog_final.md      ← obligatorio / deseable / fuera de alcance
 │   ├── matriz_requisito_componente.md
-│   └── plan_inicial.md
-├── evidence/                 ← logs, capturas y salidas de cada entrega
-├── infra/                    ← scripts de entorno (entrega 2+)
-├── notebooks/                ← exploración y perfilado
-├── src/                      ← ingesta, procesamiento y serving (entrega 2+)
-│   ├── common/               ← conformance compartido entre batch y streaming
+│   └── (1.ª entrega) estado_entrega1.md · diseno_v1 · arquitectura_v1 · plan_inicial.md
+├── evidence/entrega2/        ← calidad, quarantine, gold, serving, idempotencia, cloud
+├── infra/                    ← Dockerfiles, chequeos de entorno y emulador de Colab
+├── notebooks/                ← 01 perfilado · 02 pipeline completo
+├── src/
+│   ├── common/               ← config, sesión de Spark, esquemas, registro de corridas
 │   ├── ingest/  quality/  silver/  gold/  serving/
-└── tests/
+│   ├── pipeline.py           ← orquesta las 6 etapas
+│   └── idempotency.py        ← prueba O6
+├── tests/                    ← pytest (68 casos)
+├── docker-compose.yml  ·  Makefile  ·  requirements.txt
 ```
 
 ---
 
-## Arquitectura en una línea
+## Arquitectura
 
-**Patrón Lambda.**
+**Patrón Lambda.** Diagrama completo, con solo lo implementado: [`docs/arquitectura_v2.png`](docs/arquitectura_v2.png).
 
 ```
                     ┌──────────────────┐
@@ -46,7 +52,7 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
   (120 JSONL)       │ Streaming        │  │
                     └──────────────────┘  │   ┌────────┐   ┌────────┐   ┌───────────┐
                                           ├──►│ BRONZE │──►│ SILVER │──►│   GOLD    │──► Cassandra
-                    ┌──────────────────┐  │   │Parquet │   │Parquet │   │  5 marts  │    AstraDB
+                    ┌──────────────────┐  │   │Parquet │   │Parquet │   │  3 marts  │    AstraDB
   7 CSV maestros ──►│ Batch (PySpark)  │──┘   └────────┘   └────────┘   └───────────┘
                     └──────────────────┘            │
                                                     ▼
@@ -55,19 +61,43 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
 
 ---
 
-## Entorno de ejecución
+## Quickstart (perfil local)
 
-Solo hace falta **Docker Desktop**: Python 3.11, Java 17, PySpark 3.5.9 y Cassandra 4.1 vienen en
-contenedores (D17).
+Solo hace falta **Docker Desktop**, con al menos 4 GB de RAM. Python 3.11, Java 17, PySpark 3.5.9 y
+Cassandra 4.1 vienen en contenedores (D17). El perfil local no necesita cuenta ni token.
 
 ```bash
+# 1. Clonar
 git clone <url-del-repo>
 cd big-data
-make up      # o: docker compose up -d --build  → Jupyter en http://localhost:8888
-make check   # verifica versiones y la conexión Spark ↔ Cassandra
+
+# 2. Levantar Spark + Cassandra (la primera vez construye la imagen: unos minutos)
+make up            # Jupyter en http://localhost:8888 · Spark UI en http://localhost:4040
+make check         # versiones + escritura, lectura, upsert y TRUNCATE en Cassandra → "Entorno listo."
+
+# 3. Correr el pipeline completo desde cero (~1 minuto)
+make clean         # borra zonas generadas y checkpoints; Landing no se toca
+make pipeline      # Bronze → calidad → Silver → Gold → Cassandra, con tabla de estado por etapa
+
+# 4. Ver los resultados
+make queries       # P1 y P2 con cqlsh y con el driver → evidence/entrega2/serving/
+make cqlsh         # consola CQL interactiva (USE cloud_analytics;)
+
+# 5. Pruebas
+make test          # pytest dentro del contenedor
+make idempotency   # 3 corridas seguidas → evidence/entrega2/idempotencia/cassandra.md
+
+# 6. Apagar
+make down          # conserva los datos de Cassandra
+make reset         # borra también los datos de Cassandra
 ```
 
-Todos los comandos, la alternativa sin Docker y la solución de problemas están en
+Salida esperada de `make pipeline`: las 6 etapas en `ok`, 43.200 eventos en Bronze y Silver, 0 en
+Quarantine, y 11.050 y 262 filas en Gold y en Cassandra.
+
+También se puede correr por etapa (`make bronze`, `make quality`, `make silver`, `make gold`,
+`make serving`) o desde `notebooks/02_pipeline.ipynb`. Los comandos equivalentes en
+`docker compose`, la alternativa sin Docker y los problemas conocidos están en
 [`infra/README.md`](infra/README.md).
 
 ---
@@ -110,7 +140,7 @@ sistema es gestionado por el SO y `pip install` directo falla con `externally-ma
 
 ```bash
 git clone <url-del-repo>
-cd tp-big-data
+cd big-data
 
 python3 -m venv .venv         
 source .venv/bin/activate    
@@ -148,3 +178,22 @@ Dataset sintético provisto por la cátedra: **47.312 filas, ~13 MB**.
 | `billing_monthly.csv` | 240 | 1 factura (org × mes) |
 | `nps_surveys.csv` | 92 | 1 encuesta |
 | `customers_orgs.csv` | 80 | 1 organización |
+
+---
+
+## Logs y errores
+
+Cada etapa escribe en consola con hora y nivel, y cada job agrega una línea a
+`data/datalake/_metadata/runs/runs.jsonl` con filas leídas, escritas y rechazadas, duración y estado.
+Si una etapa falla, el pipeline se detiene ahí, la registra como `failed` y muestra el error. Los
+errores de config, de variables de entorno faltantes y de conexión con Cassandra o Astra traen un
+mensaje que dice qué revisar. Ejemplo de corrida: [`evidence/entrega2/ejecucion/`](evidence/entrega2/ejecucion/).
+
+---
+
+## Limitaciones
+
+- Gold tiene 3 de los 5 marts y el serving responde P1 y P2. El resto está en [`docs/backlog_final.md`](docs/backlog_final.md).
+- Quarantine queda vacía en el lake principal porque el dataset no viola las reglas que bloquean; las reglas se prueban con fixtures (D20).
+- El watermark es de 60 días porque cada archivo trae los 60 días mezclados (D6).
+- Corre en un solo nodo (`local[*]`).

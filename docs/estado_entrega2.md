@@ -42,7 +42,7 @@ Documentos de apoyo:
 | Analítica o ML | `src/gold/anomalies.py` | Cubierto | `gold/anomalies.md` · 134 anomalías |
 | Idempotencia | `src/idempotency.py` | Cubierto | `idempotencia/` · 3 corridas, 0 duplicados |
 | Gobierno preliminar | `gobierno.md` | Cubierto | — |
-| Pruebas y reproducibilidad | README · `config/` · `tests/` | Cubierto | `ejecucion/` · 68 tests |
+| Pruebas y reproducibilidad | README · `config/` · `tests/` | Cubierto | `ejecucion/` · 76 tests |
 | Backlog final | `backlog_final.md` | Cubierto | — |
 
 ---

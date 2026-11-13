@@ -36,7 +36,7 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
 │   ├── ingest/  quality/  silver/  gold/  serving/
 │   ├── pipeline.py           ← orquesta las 6 etapas
 │   └── idempotency.py        ← prueba O6
-├── tests/                    ← pytest (68 casos)
+├── tests/                    ← pytest (76 casos)
 ├── docker-compose.yml  ·  Makefile  ·  requirements.txt
 ```
 

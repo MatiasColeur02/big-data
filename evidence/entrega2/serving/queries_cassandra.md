@@ -1,6 +1,6 @@
 # Consultas sobre el serving · segunda entrega
 
-Provider `cassandra` · keyspace `cloud_analytics` · perfil `local` · 2026-11-10T18:12:42+00:00
+Provider `cassandra` · keyspace `cloud_analytics` · perfil `local` · 2026-11-13T01:33:24+00:00
 
 Generado por `python -m src.serving.queries` a partir de [`03_queries.cql`](../../../src/serving/cql/03_queries.cql). La salida de `cqlsh` está en [`cqlsh_queries.txt`](cqlsh_queries.txt) (`make queries`).
 

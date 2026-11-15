@@ -8,7 +8,7 @@ Pipeline de ETL, streaming y serving para analítica de FinOps, Soporte y Produc
 |---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Entrega actual      | **Segunda entrega · 16/11/2026** · implementación técnica                                                                                                                            |
 | Estado              | Pipeline ejecutable de punta a punta: Landing → Bronze → Silver → Gold → Cassandra/AstraDB, con P1 y P2 respondidas. Detalle en [`docs/estado_entrega2.md`](docs/estado_entrega2.md) |
-| Entregas anteriores | Primera · 28/09/2026 · diseño (tag `v1.0-entrega1`, nota 9/10)                                                                                                                       |
+| Entregas anteriores | Primera · 05/10/2026 · diseño (tag `v1.0-entrega1`, nota 9/10)                                                                                                                       |
 | Equipo              | Valentina Marti Reta · Nicanor Porto · Matías Coleur · Federico Etchegorry · Julieta Techenski                                                                                       |
 ---
 

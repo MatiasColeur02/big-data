@@ -1,4 +1,4 @@
-"""Serving (2.7): scripts CQL, alineación DDL ↔ Gold y errores claros antes de conectar."""
+"""Serving: scripts CQL, alineación DDL ↔ Gold y errores claros antes de conectar."""
 
 import pytest
 

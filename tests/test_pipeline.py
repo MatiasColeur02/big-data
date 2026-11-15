@@ -1,4 +1,4 @@
-"""Orquestador (2.8): selección de etapas, limpieza segura (D13) y corte ante fallas."""
+"""Orquestador: selección de etapas, limpieza segura (D13) y corte ante fallas."""
 
 from pathlib import Path
 

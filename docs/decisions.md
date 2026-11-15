@@ -277,7 +277,7 @@ La tabla suma `as_of_date` como columna regular, fuera de la clave, para que qui
 
 `org_daily_usage_by_service` no lo necesita: su clave `(org_id, usage_date, service)` no incluye métricas, así que la recarga es un upsert puro.
 
-**Nulls (implementación, 2.7):** la carga usa `spark.cassandra.output.ignoreNulls=true`. En Cassandra escribir un null es escribir un tombstone, y las métricas que no aplican (`genai_tokens` fuera de genai, `carbon_kg` en eventos v1) generaban ~1.000 tombstones por rango de token en cada recarga, con warnings de `tombstone_warn_threshold` al leer. El costo: si un reproceso cambiara una métrica de un valor a null, quedaría el valor anterior. Con Gold determinista no pasa, y si cambiara una regla de nulos (D19) se resuelve con un `TRUNCATE` de la tabla antes de recargar.
+**Nulls (implementación):** la carga usa `spark.cassandra.output.ignoreNulls=true`. En Cassandra escribir un null es escribir un tombstone, y las métricas que no aplican (`genai_tokens` fuera de genai, `carbon_kg` en eventos v1) generaban ~1.000 tombstones por rango de token en cada recarga, con warnings de `tombstone_warn_threshold` al leer. El costo: si un reproceso cambiara una métrica de un valor a null, quedaría el valor anterior. Con Gold determinista no pasa, y si cambiara una regla de nulos (D19) se resuelve con un `TRUNCATE` de la tabla antes de recargar.
 
 ---
 
@@ -319,11 +319,11 @@ Implementado en `src/quality/` (`rules.py`, `events.py`) y verificado en `tests/
 | Serving | Cassandra 4.1.12 en el mismo Compose | AstraDB |
 | Config | `config/pipeline.local.yaml` | `config/pipeline.cloud.yaml` |
 
-**Por qué cambia D2:** D2 fijaba Colab como único entorno. Desarrollar ahí obliga a reinstalar todo en cada sesión y a depender de la conectividad con Astra. Cassandra en Docker se levanta sin cuenta ni token y permite iterar rápido. La consigna acepta Colab "o un entorno equivalente validado" (§2.2). Colab + Astra se mantiene como segundo perfil porque la entrega final exige demo remota, y además puede volverse obligatorio en esta entrega según la respuesta a B4.
+**Por qué cambia D2:** D2 fijaba Colab como único entorno. Desarrollar ahí obliga a reinstalar todo en cada sesión y a depender de la conectividad con Astra. Cassandra en Docker se levanta sin cuenta ni token y permite iterar rápido. La consigna acepta Colab "o un entorno equivalente validado" (§2.2). Colab + Astra se mantiene como segundo perfil porque la entrega final exige demo remota. Cerrado en D22.
 
 **Por qué Spark también va en Docker y no en un venv:** PySpark 3.5 no soporta oficialmente Java 21 ni Python 3.12+, que son justamente las versiones que traen hoy macOS y Homebrew (la primera máquina en la que se probó tenía Python 3.14 y Java 21). Con el contenedor, los cinco integrantes y quien corrija ejecutan con las mismas versiones en macOS, Windows o Linux, y el único requisito del "entorno limpio" (§6.4) pasa a ser Docker. El venv queda como alternativa para quien ya tenga Python 3.11 y Java 17. Uso y problemas conocidos en [`infra/README.md`](../infra/README.md).
 
-**Versiones:** fijas en `requirements.txt` (PySpark 3.5.9, cassandra-driver 3.30.1) y en `infra/spark/Dockerfile` (`spark-cassandra-connector_2.12:3.5.1`, que se descarga al construir la imagen). `infra/check_env.py` las verifica (B2, B3).
+**Versiones:** fijas en `requirements.txt` (PySpark 3.5.9, cassandra-driver 3.30.1) y en `infra/spark/Dockerfile` (`spark-cassandra-connector_2.12:3.5.1`, que se descarga al construir la imagen). `infra/check_env.py` las verifica.
 
 **Reglas de portabilidad** que el código de la fase 1 tiene que cumplir:
 
@@ -462,15 +462,15 @@ PySpark 3.5 no soporta Java 21.
 
 | Prueba | Resultado | Evidencia |
 |---|---|---|
-| B3 en Astra: escritura y lectura con el connector, upsert sin duplicar, `TRUNCATE` con el driver | OK | `evidence/entrega2/cloud/check_astra.txt` |
+| Verificación de Astra (`make check-astra`): escritura y lectura con el connector, upsert sin duplicar, `TRUNCATE` con el driver | OK | `evidence/entrega2/cloud/check_astra.txt` |
 | Carga de Gold en Astra | 11.050 y 262 filas, igual a Gold | `evidence/entrega2/serving/queries_astradb.md` |
 | P1 y P2 en Astra | Mismas filas y valores que en Cassandra local | `queries_astradb.md` vs `queries_cassandra.md` |
 | Idempotencia (O6) con serving en Astra, tres corridas | Conteos y sumas idénticos, 0 duplicados | `evidence/entrega2/idempotencia/astradb.md` |
 | `02_pipeline.ipynb` en el emulador de Colab (`make colab-emu`), desde cero contra Astra | 6 etapas OK en ~1 min (más la descarga del connector la primera vez) | `evidence/entrega2/cloud/runs_colab_emulado.jsonl` |
 
-**Pendiente:** la corrida en Colab real y las capturas de P1/P2 desde la consola de Astra
-(`evidence/entrega2/cloud/README.md`). El emulador no cubre el panel de Secrets, la subida del
-bundle ni el `git clone`.
+**Pendiente:** la corrida en Colab real (`evidence/entrega2/cloud/README.md`). Las capturas de P1 y
+P2 desde la consola de Astra ya están (`astra_console_p1.png` y `astra_console_p2.png`). El emulador
+no cubre el panel de Secrets, la subida del bundle ni el `git clone`.
 
 ---
 
@@ -497,7 +497,6 @@ Decisiones no tomadas a la fecha, con su fecha límite y la opción preferida.
 | Pregunta | Se decide antes de | Inclinación |
 |---|---|---|
 | ¿Herramienta de visualización? | 07/12 | Notebook con matplotlib |
-| ¿Airflow o notebook secuencial? | 07/12 | Secuencial: Airflow en Colab es overhead sin beneficio |
 
 ### Cerradas en la segunda entrega
 
@@ -507,6 +506,7 @@ Decisiones no tomadas a la fecha, con su fecha límite y la opción preferida.
 | ¿AstraDB o Cassandra en Docker? | Las dos, en fases: Cassandra en Docker para el perfil local y AstraDB para el perfil cloud (D17) |
 | ¿El componente de ML es anomalías o churn? | Anomalías con MAD (D9): reutiliza el análisis del perfilado y alimenta `cost_anomaly_mart`, que es un mart que la consigna ya pide |
 | ¿SCD tipo 2 en `dim_org`? | No. `customers_orgs.csv` es una sola foto, sin historia de cambios de plan: `dim_org` es SCD tipo 1 y se reemplaza en cada carga |
+| ¿Airflow o notebook secuencial? | Secuencial: `src/pipeline.py` corre las etapas en orden y se detiene ante un error. Airflow en Colab es overhead sin beneficio y queda fuera de alcance (`backlog_final.md`) |
 
 ---
 

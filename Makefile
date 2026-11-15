@@ -17,7 +17,7 @@ up:  ## Construye la imagen, levanta Cassandra, aplica el esquema y abre Jupyter
 idempotency:  ## Prueba de idempotencia O6 (3 corridas); PROFILE=cloud para AstraDB
 	$(RUN) python -m src.idempotency
 
-check-astra:  ## Verifica escritura, lectura y TRUNCATE en AstraDB; salida en evidence/entrega2/cloud (2.9)
+check-astra:  ## Verifica escritura, lectura y TRUNCATE en AstraDB; salida en evidence/entrega2/cloud
 	@mkdir -p evidence/entrega2/cloud
 	set -o pipefail; $(RUN) python infra/check_astra.py | grep -v '^:: loading' | tee evidence/entrega2/cloud/check_astra.txt
 
@@ -32,13 +32,13 @@ colab-emu:  ## Corre 02_pipeline.ipynb en un emulador de Colab (Python 3.12) con
 		-v colab-emu-ivy:/root/.ivy2 \
 		cloud-analytics-colab-emu bash /repo/infra/colab/run.sh
 
-check:  ## Verifica versiones y escritura, lectura y TRUNCATE en Cassandra (B2, B3)
+check:  ## Verifica versiones y escritura, lectura y TRUNCATE en Cassandra
 	$(RUN) python infra/check_env.py
 
 test:  ## Corre pytest dentro del contenedor
 	$(RUN) pytest
 
-pipeline:  ## Corre el pipeline completo: Bronze → calidad → Silver → Gold → Serving (2.8)
+pipeline:  ## Corre el pipeline completo: Bronze → calidad → Silver → Gold → Serving
 	$(RUN) python -m src.pipeline
 
 clean:  ## Borra juntas las zonas generadas del lake y los checkpoints (D13); Landing no se toca

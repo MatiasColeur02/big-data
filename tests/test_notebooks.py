@@ -1,4 +1,4 @@
-"""Higiene de los notebooks versionados (plan 2.9, consigna §7.6).
+"""Higiene de los notebooks versionados (consigna §7.6).
 
 Las salidas pueden mostrar rutas locales, el entorno de Colab o, por error, el token de AstraDB:
 los notebooks se commitean siempre sin salidas. Para limpiarlos:

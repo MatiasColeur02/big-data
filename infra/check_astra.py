@@ -1,4 +1,4 @@
-"""Verificación de AstraDB (fase 2, 2.9): la misma prueba que B3 pero contra el perfil cloud.
+"""Verificación de AstraDB (fase 2): la misma prueba que `infra/check_env.py` pero contra el perfil cloud.
 
 1. Config cloud válida: bundle existente y `ASTRA_DB_TOKEN` definido.
 2. cassandra-driver conecta con el bundle y el keyspace existe (se crea desde la consola de Astra).

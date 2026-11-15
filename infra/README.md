@@ -30,6 +30,7 @@ las zonas que genera el pipeline quedan en `data/datalake/` del repo (ignoradas 
 | Consultas P1/P2 con `cqlsh` y con el driver → `evidence/entrega2/serving/` | `make queries` | `docker compose run --rm --no-deps -T --entrypoint cqlsh cassandra-init cassandra 9042 -f /cql/03_queries.cql` |
 | Verificar AstraDB: escritura, lectura, upsert y `TRUNCATE` → `evidence/entrega2/cloud/check_astra.txt` | `make check-astra` | `docker compose run --rm spark python infra/check_astra.py` |
 | Cualquier regla contra AstraDB (perfil cloud, D17) | `make <regla> PROFILE=cloud` | `docker compose run --rm -e PIPELINE_PROFILE=cloud spark <comando>` |
+| Correr `02_pipeline.ipynb` en un emulador de Colab (Python 3.12) contra AstraDB → `evidence/entrega2/cloud/` (D22) | `make colab-emu` | Ver la regla `colab-emu` del `Makefile` |
 | Prueba de idempotencia O6 (3 corridas) → `evidence/entrega2/idempotencia/` | `make idempotency` | `docker compose run --rm spark python -m src.idempotency` |
 | Terminal en el contenedor de Spark | `make shell` | `docker compose run --rm spark bash` |
 | `cqlsh` contra Cassandra | `make cqlsh` | `docker compose exec cassandra cqlsh` |
@@ -40,7 +41,7 @@ las zonas que genera el pipeline quedan en `data/datalake/` del repo (ignoradas 
 La primera vez `make up` tarda unos minutos: construye la imagen (~1,1 GB) y Cassandra demora
 ~1 minuto en quedar healthy. Después, `up` tarda segundos.
 
-`make check` verifica los bloqueantes B2 y B3: versiones de Python, Java y PySpark, escritura y
+`make check` verifica las versiones de Python, Java y PySpark, la escritura y
 lectura con el connector (dos veces, para comprobar que el upsert no duplica) y `TRUNCATE` con
 `cassandra-driver`. Salida esperada:
 

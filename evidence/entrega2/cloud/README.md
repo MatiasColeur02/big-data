@@ -1,11 +1,11 @@
 # Evidencia · perfil cloud (fase 2: Colab + AstraDB)
 
-Plan 2.9, decisiones D17 y D22. Mismo código que el perfil local: solo cambian
+Decisiones D17 y D22. Mismo código que el perfil local: solo cambian
 `serving.provider: astradb` y la ruta del secure connect bundle (`config/pipeline.cloud.example.yaml`).
 
 | Prueba | Cómo se regenera | Resultado | Archivo |
 |---|---|---|---|
-| B3 en AstraDB: escritura y lectura con el connector, upsert sin duplicar, `TRUNCATE` con el driver | `make check-astra` | OK | [`check_astra.txt`](check_astra.txt) |
+| Verificación de AstraDB: escritura y lectura con el connector, upsert sin duplicar, `TRUNCATE` con el driver | `make check-astra` | OK | [`check_astra.txt`](check_astra.txt) |
 | Carga de Gold y consultas P1/P2 en Astra | `make serving PROFILE=cloud` | 11.050 y 262 filas, igual a Gold; P1 = 34 filas, P2 = 5 | [`../serving/queries_astradb.md`](../serving/queries_astradb.md) |
 | P1/P2: Astra contra Cassandra local | `diff` de los dos archivos sin la cabecera | Mismas filas y valores | [`../serving/queries_cassandra.md`](../serving/queries_cassandra.md) |
 | Idempotencia O6 con serving en Astra (3 corridas) | `make idempotency PROFILE=cloud` | Conteos y sumas idénticos, 0 duplicados | [`../idempotencia/astradb.md`](../idempotencia/astradb.md) |

@@ -7,7 +7,7 @@
 #
 # Copia el repo a /content/big-data como haría el `git clone` de la celda de setup, instala lo mismo
 # que esa celda y ejecuta el notebook con CLEAN = True. El notebook ejecutado no se guarda: sus
-# salidas muestran rutas del entorno (plan 2.9).
+# salidas muestran rutas del entorno.
 set -euo pipefail
 
 CLONE=/content/big-data

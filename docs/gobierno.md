@@ -97,13 +97,14 @@ gold/org_service_cost_14d ────────── serving ─────
 
 | Control | Implementación |
 |---|---|
-| Ninguna credencial en el repo | `.gitignore` excluye `.env`, `config/pipeline.*.yaml`, `secure-connect-*.zip`, `*.pem` y `**/token*.json` |
+| Ninguna credencial en el repo | `.gitignore` excluye `.env`, `config/pipeline.local.yaml`, `config/pipeline.cloud.yaml`, `secure-connect-*.zip`, `*.pem` y `**/token*.json` |
 | Token de Astra solo por variable de entorno | `ASTRA_DB_TOKEN`, desde `.env` en Docker o desde Secrets en Colab (D17, D22) |
 | El YAML no admite secretos escritos | `src/common/config.py` falla si `token`, `password` o `secret` tienen un valor literal |
 | Notebook sin salidas versionadas | `tests/test_notebooks.py` |
 | Landing de solo lectura | Ningún job escribe ahí, y `make clean` se niega a borrar una ruta que se superponga con Landing |
 | Una zona, un job que la escribe | Las rutas salen de la config, no del código (D17) |
 | Cassandra local | Sin autenticación, publicada solo en `127.0.0.1:9042` |
+| Jupyter local | Sin token, publicado solo en `127.0.0.1:8888` |
 | AstraDB | Token y secure connect bundle; el keyspace se crea desde la consola |
 
 El único dato personal del dataset es `users.email`, sintético (`<user_id>@example.com`), y no llega a Gold ni a Cassandra.

@@ -2,7 +2,7 @@
 
     python -m src.quality.events     # valida Bronze, escribe Quarantine y exporta evidencia
 
-`validate_events` es lo que llama Silver (2.5): devuelve los válidos ya marcados y deja escrita
+`validate_events` es lo que llama Silver: devuelve los válidos ya marcados y deja escrita
 la Quarantine. Silver recalcula todas las fechas en cada corrida (43.200 filas, segundos), así
 que Quarantine se reemplaza completa y la re-ejecución da el mismo resultado (O6).
 """

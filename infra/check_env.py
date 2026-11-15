@@ -1,4 +1,4 @@
-"""Verificación del entorno: bloqueantes B2 y B3 del plan de la segunda entrega.
+"""Verificación del entorno local: versiones, escritura y lectura con el connector y TRUNCATE.
 
 1. Versiones: Python 3.11, Java 17 y PySpark 3.5 (D17).
 2. Spark escribe y lee en Cassandra con el connector. Se escribe dos veces el mismo lote para

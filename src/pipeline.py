@@ -1,4 +1,4 @@
-"""Orquestador del pipeline: Landing → Bronze → Silver → Gold → Serving en una sola corrida (2.8).
+"""Orquestador del pipeline: Landing → Bronze → Silver → Gold → Serving en una sola corrida.
 
     python -m src.pipeline                        # todas las etapas, en orden
     python -m src.pipeline --clean                # borra las zonas generadas y corre todo de cero

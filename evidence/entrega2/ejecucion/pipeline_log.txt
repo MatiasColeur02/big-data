@@ -1,0 +1,55 @@
+docker compose run --rm  spark python -m src.pipeline
+01:31:40 INFO  [403d78d304bc] pipeline: landing → serving
+01:31:40 INFO  ━━ bronze_masters · Maestros CSV → Bronze
+01:31:40 INFO  [08008e6e1a42] bronze_masters: landing → bronze
+01:31:47 INFO    billing_monthly    landing=  240 bronze=  240 quarantine=0 · 3 archivo(s), 3 partición(es), 18.4 KB
+01:31:49 INFO    customers_orgs     landing=   80 bronze=   80 quarantine=0 · 1 archivo(s), 0 partición(es), 6.4 KB
+01:31:50 INFO    marketing_touches  landing= 1500 bronze= 1500 quarantine=0 · 1 archivo(s), 0 partición(es), 22.3 KB
+01:31:51 INFO    nps_surveys        landing=   92 bronze=   92 quarantine=0 · 1 archivo(s), 0 partición(es), 3.4 KB
+01:31:52 INFO    resources          landing=  400 bronze=  400 quarantine=0 · 1 archivo(s), 0 partición(es), 11.3 KB
+01:31:53 INFO    support_tickets    landing= 1000 bronze= 1000 quarantine=0 · 1 archivo(s), 0 partición(es), 18.3 KB
+01:31:53 INFO    users              landing=  800 bronze=  800 quarantine=0 · 1 archivo(s), 0 partición(es), 22.9 KB
+01:31:53 INFO  [08008e6e1a42] bronze_masters ok en 13.2 s · leídas=4112 escritas=4112 rechazadas=0
+01:31:53 INFO  ━━ bronze_stream · Eventos JSONL → Bronze (streaming)
+01:31:53 INFO  [ce40901cf603] bronze_stream: landing → bronze
+26/11/13 01:31:54 WARN ResolveWriteToStream: spark.sql.adaptive.enabled is not supported in streaming DataFrames/Datasets and will be disabled.
+01:32:21 INFO    lotes=24 filas=43200 duplicados=0 tardías descartadas=0 · watermark=2025-07-02T23:58:00.000Z
+01:32:21 INFO    Bronze total: 43200 filas, 43200 event_id distintos, 60 fechas · 1440 archivos, 9508.4 KB
+01:32:21 INFO  [ce40901cf603] bronze_stream ok en 27.8 s · leídas=43200 escritas=43200 rechazadas=0
+01:32:21 INFO  ━━ quality · Reglas de calidad → Quarantine
+01:32:21 INFO  [dd9f6bb1ddc1] quality_events: bronze → quarantine
+01:32:38 INFO    bronze=43200 válidos=43200 quarantine=0 · bloqueos={'event_id_null': 0, 'event_id_duplicate': 0, 'value_not_castable': 0} · marcas={'cost_negative': 211, 'unit_imputed': 2038, 'value_null': 877}
+01:32:38 INFO  [dd9f6bb1ddc1] quality_events ok en 16.9 s · leídas=43200 escritas=43200 rechazadas=0
+01:32:38 INFO    evidencia en evidence/entrega2/quality
+01:32:38 INFO  ━━ silver · Bronze → Silver
+01:32:38 INFO  [5388dfd042eb] silver: bronze → silver
+26/11/13 01:32:49 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+01:33:04 INFO    dims: {'dim_org': 80, 'dim_resource': 400}
+01:33:04 INFO    usage_events: 43200 filas, 60 fechas, huérfanos org/recurso=0/0, 60 archivos
+01:33:04 INFO    usage_daily_features: 11050 filas (11050 claves), costo total 147433.98 USD, requests no medidos=68
+01:33:04 INFO    balance bronze = silver + quarantine: 0 fechas sin cerrar
+01:33:04 INFO  [5388dfd042eb] silver ok en 26.1 s · leídas=43200 escritas=43200 rechazadas=0
+01:33:04 INFO  ━━ gold · Silver → Gold
+01:33:04 INFO  [bfd31071dfec] gold: silver → gold
+01:33:15 INFO    as_of_date=2025-08-31 · filas: {'org_daily_usage_by_service': 11050, 'org_service_cost_14d': 262, 'cost_anomaly_mart': 11050}
+01:33:15 INFO    anomalías: 134 de 11050 días-servicio (1.21 %) · métodos: {'mad': {'groups_days': 11050, 'anomalies': 134}}
+01:33:15 INFO  [bfd31071dfec] gold ok en 11.2 s · leídas=11050 escritas=22362 rechazadas=0
+01:33:18 INFO  ━━ serving · Gold → Cassandra/AstraDB
+01:33:18 INFO  [4f297937192f] serving: gold → serving
+01:33:18 INFO    02_tables.cql: esquema aplicado (2 sentencias) en `cloud_analytics` · provider=cassandra
+01:33:23 INFO    org_daily_usage_by_service   gold=11050 cassandra=11050 · upsert por clave natural
+01:33:24 INFO    org_service_cost_14d         gold=  262 cassandra=  262 · TRUNCATE + carga (D14)
+01:33:24 INFO  [4f297937192f] serving ok en 5.7 s · leídas=11312 escritas=11312 rechazadas=0
+01:33:24 INFO    P1 · Costos y requests diarios por organización y servicio, última semana (25/08 → 31/08): 34 fila(s)
+01:33:24 INFO    P2 · Top-5 servicios por costo acumulado en los últimos 14 días (18/08 → 31/08): 5 fila(s)
+01:33:24 INFO    evidencia en evidence/entrega2/serving/queries_cassandra.md
+01:33:24 INFO  [403d78d304bc] pipeline ok en 103.5 s · leídas=None escritas=None rechazadas=None
+01:33:24 INFO  ━━ pipeline terminado: bronze_masters ok (13 s) · bronze_stream ok (28 s) · quality ok (17 s) · silver ok (26 s) · gold ok (14 s) · serving ok (6 s)
+| Etapa | Estado | Duración (s) |
+|---|---|---|
+| bronze_masters | ok | 13.3 |
+| bronze_stream | ok | 27.8 |
+| quality | ok | 17.0 |
+| silver | ok | 26.1 |
+| gold | ok | 13.6 |
+| serving | ok | 5.8 |

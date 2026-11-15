@@ -10,7 +10,8 @@ Plan 2.9, decisiones D17 y D22. Mismo código que el perfil local: solo cambian
 | P1/P2: Astra contra Cassandra local | `diff` de los dos archivos sin la cabecera | Mismas filas y valores | [`../serving/queries_cassandra.md`](../serving/queries_cassandra.md) |
 | Idempotencia O6 con serving en Astra (3 corridas) | `make idempotency PROFILE=cloud` | Conteos y sumas idénticos, 0 duplicados | [`../idempotencia/astradb.md`](../idempotencia/astradb.md) |
 | `02_pipeline.ipynb` de punta a punta en un runtime tipo Colab (Python 3.12, numpy 2, Java 17 por `apt`), desde cero y contra Astra | `make colab-emu` | 6 etapas OK, sin errores | [`runs_colab_emulado.jsonl`](runs_colab_emulado.jsonl), [`queries_colab_emulado.md`](queries_colab_emulado.md) |
-| Notebook en Google Colab real y P1/P2 desde la consola de Astra | Manual (ver README, "Perfil cloud") | **Pendiente** | `colab_run.png`, `astra_console_p1.png`, `astra_console_p2.png` |
+| P1/P2 desde la consola de Astra (CQL Console) | Manual | **OK** (P1 = 34 filas, P2 = 5 filas, la primera `analytics` con 282,0746) | [`astra_console_p1.png`](astra_console_p1.png), [`astra_console_p2.png`](astra_console_p2.png) |
+| Notebook en Google Colab real | Manual (ver README, "Perfil cloud") | **Pendiente** | `colab_run.png` |
 
 ## Emulador de Colab
 
@@ -29,11 +30,10 @@ Astra). La primera corrida, además, descarga el connector y sus 16 dependencias
 y eso puede tardar bastante más. El emulador guarda esa descarga en el volumen `colab-emu-ivy`; en Colab
 se repite en cada sesión nueva.
 
-## Capturas pendientes (Colab real)
+## Captura pendiente (Colab real)
 
 1. Correr `notebooks/02_pipeline.ipynb` en Colab según el README y capturar la tabla de resumen
    (estado de cada etapa) → `colab_run.png`.
-2. En la consola de Astra (*CQL Console*), `USE cloud_analytics;` y pegar P1 y P2 de
-   [`src/serving/cql/03_queries.cql`](../../../src/serving/cql/03_queries.cql) → `astra_console_p1.png`,
-   `astra_console_p2.png`.
-3. Revisar que ninguna captura muestre el token.
+2. Revisar que la captura no muestre el token.
+
+Las capturas de la consola de Astra (P1 y P2) ya están hechas: ver la tabla de arriba.

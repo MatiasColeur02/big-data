@@ -1,6 +1,6 @@
 # Trazabilidad de la segunda entrega
 
-**Fecha límite: lunes 16/11/2026 · 18:30 h** · Última revisión: 15/11/2026
+**Fecha límite: lunes 16/11/2026 · 18:30 h** · Última revisión: 16/11/2026
 
 Relación entre lo que pide la consigna para la segunda evaluación y el archivo del repositorio que lo cubre.
 
@@ -10,13 +10,13 @@ Estados: **Cubierto** · **Parcial** · **Pendiente**
 
 ## 1. Artefactos de entrega (§6.3)
 
-| # | Artefacto | Archivo | Estado | Observación |
-|---|---|---|---|---|
-| 1 | Repositorio con código reproducible, Bronze/Silver/Gold en Parquet, scripts CQL y README Quickstart | `src/` · `src/serving/cql/` · [`../README.md`](../README.md) | Cubierto | — |
-| 2 | Diagrama actualizado | [`arquitectura_v2.svg`](arquitectura_v2.svg), exportado a PNG | Cubierto | — |
-| 3 | Log de decisiones | [`decisions.md`](decisions.md) | Cubierto | D1 patrón · D3 y D13 particiones · D8 y D14 claves · D9 umbral |
-| 4 | Evidencias de ejecución | [`../evidence/entrega2/`](../evidence/entrega2/) | Cubierto | Capturas de P1 y P2 en la consola de Astra en `cloud/` |
-| 5 | Backlog priorizado | [`backlog_final.md`](backlog_final.md) | Cubierto | — |
+| # | Artefacto                                                                                           | Archivo                                                       | Estado   | Observación                                                                            |
+|---|-----------------------------------------------------------------------------------------------------|---------------------------------------------------------------|----------|----------------------------------------------------------------------------------------|
+| 1 | Repositorio con código reproducible, Bronze/Silver/Gold en Parquet, scripts CQL y README Quickstart | `src/` · `src/serving/cql/` · [`../README.md`](../README.md)  | Cubierto | —                                                                                      |
+| 2 | Diagrama actualizado                                                                                | [`arquitectura_v2.svg`](arquitectura_v2.svg), exportado a PNG | Cubierto | —                                                                                      |
+| 3 | Log de decisiones                                                                                   | [`decisions.md`](decisions.md)                                | Cubierto | D1 patrón · D3 y D13 particiones · D8 y D14 claves · D9 umbral                         |
+| 4 | Evidencias de ejecución                                                                             | [`../evidence/entrega2/`](../evidence/entrega2/)              | Cubierto | Capturas de P1 y P2 en la consola de Astra y de la corrida en Google Colab en `cloud/` |
+| 5 | Backlog priorizado                                                                                  | [`backlog_final.md`](backlog_final.md)                        | Cubierto | —                                                                                      |
 
 Documentos de apoyo:
 
@@ -82,4 +82,5 @@ Cierre del repositorio:
 - [x] Sin credenciales versionadas
 - [x] Quickstart probado desde un clon limpio
 - [x] Captura de las consultas en la consola de Astra
+- [x] Notebook corrido en Google Colab real contra AstraDB (`evidence/entrega2/cloud/colab_run*.png`)
 - [x] Tag `v2.0-entrega2`
